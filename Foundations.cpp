@@ -2,7 +2,7 @@
 #include <list>
 
 class string {
-	// Test commit 2
+	// Test commit 3
 };
 class Object {
 public:
