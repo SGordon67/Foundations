@@ -3,12 +3,46 @@
 #include <string>
 #include <iterator>
 
-class Object {
+
+class Char {
 public:
-	Object() {}
-	Object(std::string x) {this->o = x;}
-	std::string o;
+	Char() {}
+	Char(char x) {this->c = x;}
+	char c;
 };
+
+class Alphabet {
+public:
+	virtual int size() { return 0; }
+	virtual Char index(int i) { return 0; }
+};
+
+class EmptyAlphabet : public Alphabet {
+public:
+	EmptyAlphabet() {}
+	int size() { return 0; }
+	Char index(int i) { return 0; }
+};
+
+class SingleAlphabet : public Alphabet {
+public:
+	Char c;
+	Alphabet a;
+	SingleAlphabet(Char c, Alphabet a) {
+		this->c = c;
+		this->a = a;
+	}
+	int size() {
+		return 1 + a.size();
+	}
+	Char index(int i) {
+		if (i == 0) { return c; }
+		else return( a.index(i - 1) );
+	}
+};
+
+class 
+/*
 class string {
 };
 class OneString {
@@ -25,10 +59,14 @@ class MTString : public OneString {
 public:
 	MTString() {}
 };
+*/
+
 
 int main()
 {
-	std::list<Object> Alphabet; // The Alphabet
+	
+
+	/*
 	MTString mt = MTString();	// Empty String
 
 	Object sigma = Object("sigma");
@@ -56,5 +94,5 @@ int main()
 	OneString OIO = OneString(zero, new OneString(one, new OneString(zero, new MTString())));
 	std::cout << "OIO string: \n";
 	std::cout << OIO.a.o << "\n" <<  OIO.b->a.o << "\n" << OIO.b->b->a.o << "\n";
-	
+	*/
 }
