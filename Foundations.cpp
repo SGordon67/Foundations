@@ -1,14 +1,13 @@
 #include <iostream>
 #include <list>
 #include <string>
-#include <iterator>
 
 
 class Char {
 public:
-	Char() {}
-	Char(char x) {this->c = x;}
 	char c;
+	Char() { this->c = 'n'; };
+	Char(char x) {this->c = x;}
 };
 
 class Alphabet {
@@ -25,9 +24,9 @@ public:
 };
 
 class SingleAlphabet : public Alphabet {
-public:
 	Char c;
 	Alphabet a;
+public:
 	SingleAlphabet(Char c, Alphabet a) {
 		this->c = c;
 		this->a = a;
@@ -41,7 +40,55 @@ public:
 	}
 };
 
-class 
+class String {
+public:
+	String() {}
+	virtual bool isEmpty() { return true; }
+	virtual Char fChar() { return (Char('n')); }
+	virtual String* next() { return (&String()); }
+};
+
+class epsilon : public String {
+public:
+	epsilon() {}
+	bool isEmpty() { return true; }
+	Char fChar() { throw new _exception; }
+	String* next() { throw new _exception; }
+};
+
+class OneString : public String{
+	Char c;
+	String* s;
+public:
+	OneString(Char c, OneString* s) {
+		this->c = c;
+		this->s = s;
+	}
+	OneString(Char c, String* s) {
+		this->c = c;
+		this->s = s;
+	}
+	bool isEmpty() {
+		return false;
+	}
+	Char fChar() { return this->c; }
+	String* next() { return this->s; }
+
+	void print() {
+		std::string a;
+
+		while ( this->isEmpty() == false ) {
+			//std::cout << "im here";
+			a.push_back(this->c.c);
+			a.push_back(this->next()->fChar().c);
+			break;
+		}
+		std::cout << a;
+		//std::cout << this->c.c;
+	}
+};
+
+
 /*
 class string {
 };
@@ -64,7 +111,14 @@ public:
 
 int main()
 {
-	
+	Char test = Char('t');
+	Char test2 = Char('e');
+	Char test3 = Char('s');
+
+	epsilon e = epsilon();
+	OneString testString = OneString(test, &OneString(test2,  &e));
+
+	testString.print();
 
 	/*
 	MTString mt = MTString();	// Empty String
