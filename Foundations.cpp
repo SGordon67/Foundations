@@ -70,7 +70,7 @@ public:
 	int size() { return 0; }
 	Char index(int i) { 
 		if (i == 0) { return(Char('E')); }
-		else throw new _exception; 
+		else std::cout << "Exception here!\n";
 	}
 	String* nString(int i) {
 		if (i == 0) { return (new epsilon()); }
@@ -97,18 +97,18 @@ public:
 		if (i == 0) { return c; }
 		else return(a->index(i - 1));
 	}
-	String* nString(int i) {
-		int z = i; // index of the desired string
-		int x = this->size(); // number of characters in the alphabet
-		int p = 0;	// max power of x so that (x^p < z)
+	String* nString(int in) {
+		double z = in; // index of the desired string
+		double x = this->size(); // number of characters in the alphabet
+		double p = 0;	// max power of x so that (x^p < z)
 					// also the length of the desired string
 
-		int a = 0; // index of the desired string in the list of Strings of the correct length
+		double a = 0; // index of the desired string in the list of Strings of the correct length
 
 		// setting p to the correct power
-		for (int i = 0; i < 10; i++) {
+		for (double i = 0; i < 10; i++) {
 			if (std::pow(x, i) > z) {
-				p = (i - 1);
+				p = (i-1);
 				break;
 			}
 		}
@@ -125,16 +125,33 @@ public:
 		std::cout << " p = " << p << "\n";
 		std::cout << " x = " << x << "\n";
 
-		OneString* ret = new OneString();
-		for (int i = 0; i <= p; i++) {
-			for (int j = 1; j <= x; j++) {
-				if (z < (pow(x, p) / (j*x))) {
-					ret->c = this->index(j-1);
+		OneString* ret1 = new OneString();
+		OneString* ret = ret1;
+		int append = 0;
+
+		for (int i = 0; i < p; i++) {
+			for (double j = 1; j <= x+1; j++) {
+				std::cout << "this is i: " << i << "\n";
+				std::cout << "this is j: " << j << "\n";
+				if (a <= ((pow(x, p) / ((j) * x)))) {
+					append = (j - 1);
+					//ret->c = this->index(j-1);
+					std::cout << "appending: " << this->index(j - 1).c << "\n";
 				}
 			}
-			ret->s = new OneString();
-			ret = ret->next();
+			ret->c = this->index(append);
+			std::cout << "appending to string: " << this->index(append).c << "\n";
+
+
+
+			std::cout << "after inner for loop\n";
+			if (i != p - 1) {
+				OneString* temp = new OneString();
+				ret->s = temp;
+				ret = temp;
+			}
 		}
+		return ret1;
 		/*
 		// getting the correct OneString object
 		switch (x)
