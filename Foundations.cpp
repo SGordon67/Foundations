@@ -121,6 +121,7 @@ public:
 		}
 		a = temp - (sum - z);
 
+		std::cout << " z = " << z << "\n";
 		std::cout << " a = " << a << "\n";
 		std::cout << " p = " << p << "\n";
 		std::cout << " x = " << x << "\n";
@@ -128,23 +129,31 @@ public:
 		OneString* ret1 = new OneString();
 		OneString* ret = ret1;
 		int append = 0;
+		int tester = ((pow(x, p)) / x);
+
 
 		for (int i = 0; i < p; i++) {
 			for (double j = 1; j <= x+1; j++) {
-				std::cout << "this is i: " << i << "\n";
-				std::cout << "this is j: " << j << "\n";
-				if (a <= ((pow(x, p) / ((j) * x)))) {
+				std::cout << "testing condition: \n";
+				std::cout << "a: " << a << "\n";
+				std::cout << "tester: " << (j * tester) << "\n";
+				if (a <= (j * tester)) {
 					append = (j - 1);
-					//ret->c = this->index(j-1);
-					std::cout << "appending: " << this->index(j - 1).c << "\n";
+					tester = ((j * tester) / x);
+					std::cout << "append in loop: " << append << "\n";
+					break;
+				}
+				else { 
+
 				}
 			}
+			std::cout << "append post loop: " << append << "\n";
 			ret->c = this->index(append);
 			std::cout << "appending to string: " << this->index(append).c << "\n";
 
 
 
-			std::cout << "after inner for loop\n";
+			std::cout << "after inner for loop\n\n";
 			if (i != p - 1) {
 				OneString* temp = new OneString();
 				ret->s = temp;
@@ -185,7 +194,11 @@ public:
 
 int main()
 {
-	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'),  new EmptyAlphabet()));
+	// 3 char alphabet
+	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'),  new SingleAlphabet(Char('2'), new EmptyAlphabet())));
+
+	// binary ( 2 char )
+	//SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
 
 	/* test area start */
 	String* tester = a.nString(11);
