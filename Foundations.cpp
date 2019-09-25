@@ -121,39 +121,26 @@ public:
 		}
 		a = temp - (sum - z);
 
-		std::cout << " z = " << z << "\n";
-		std::cout << " a = " << a << "\n";
-		std::cout << " p = " << p << "\n";
-		std::cout << " x = " << x << "\n";
-
 		OneString* ret1 = new OneString();
 		OneString* ret = ret1;
 		int append = 0;
-		int tester = ((pow(x, p)) / x);
+		int tester = (pow(x, p));
 
 
 		for (int i = 0; i < p; i++) {
 			for (double j = 1; j <= x+1; j++) {
-				std::cout << "testing condition: \n";
-				std::cout << "a: " << a << "\n";
-				std::cout << "tester: " << (j * tester) << "\n";
-				if (a <= (j * tester)) {
+				if (a <= (j * (tester / x))) {
 					append = (j - 1);
 					tester = ((j * tester) / x);
-					std::cout << "append in loop: " << append << "\n";
 					break;
 				}
-				else { 
-
+				else {
+					a = a - (tester / x);
+					tester = tester - (tester / x);
 				}
 			}
-			std::cout << "append post loop: " << append << "\n";
 			ret->c = this->index(append);
-			std::cout << "appending to string: " << this->index(append).c << "\n";
 
-
-
-			std::cout << "after inner for loop\n\n";
 			if (i != p - 1) {
 				OneString* temp = new OneString();
 				ret->s = temp;
@@ -161,34 +148,6 @@ public:
 			}
 		}
 		return ret1;
-		/*
-		// getting the correct OneString object
-		switch (x)
-		{
-		case 1: //1 character in the alphabet
-			break;
-		case 2: // 2 characters in the alphabet
-			if (p == 0) {
-				return new epsilon();
-			}
-			else if (p == 1) {
-				OneString* ret = new OneString(this->index(a), new epsilon());
-				std::cout << "here and it is: " << this->index(a).c;
-				return ret;
-			}
-			else if (p == 2) {
-				if (a < (temp/2)) {
-
-				}
-			}
-			break;
-		case 3:
-			break;
-		default: // code to be executed if n doesn't match any cases
-			return new epsilon();
-		}
-		*/
-		return new epsilon(); // filler so I can compile
 	}
 };
 
@@ -198,10 +157,19 @@ int main()
 	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'),  new SingleAlphabet(Char('2'), new EmptyAlphabet())));
 
 	// binary ( 2 char )
-	//SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
+	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
 
 	/* test area start */
-	String* tester = a.nString(11);
+	int m = 18;
+	String* tester = b.nString(m);
+
+	int n = 22;
+	String* tester2 = b.nString(n);
+
+	std::cout << "nstring test with m = " << m << ": ";
+	tester2->print();
+
+	std::cout << "\nnstring test with n = " << n << ": ";
 	tester->print();
 	/* test area end */
 
@@ -211,6 +179,7 @@ int main()
 	Char test3 = Char('s');
 	epsilon e = epsilon();
 
+	std::cout << "\n\ntest: ";
 	OneString testString = OneString(test, new OneString(test2,  new OneString(test3, new OneString(test, &e))));
 
 	testString.print();
