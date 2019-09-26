@@ -98,10 +98,16 @@ public:
 		else return(a->index(i - 1));
 	}
 	String* nString(int in) {
+		// deal with the trivial case
+		if (in == 0) {
+			return new epsilon();
+		}
+
 		double z = in; // index of the desired string
 		double x = this->size(); // number of characters in the alphabet
+		
 		double p = 0;	// max power of x so that (x^p < z)
-					// also the length of the desired string
+						// also the length of the desired string
 
 		double a = 0; // index of the desired string in the list of Strings of the correct length
 
@@ -121,26 +127,43 @@ public:
 		}
 		a = temp - (sum - z);
 
+		// creating the returning string and a pointer to it
+		// in order to change the values.
 		OneString* ret1 = new OneString();
 		OneString* ret = ret1;
+		// values i'll need for convenience
 		int append = 0;
 		int tester = (pow(x, p));
 
+		std::cout << "\nx = " << x << "\n";
+		std::cout << "p = " << p << "\n";
+		std::cout << "a = " << a << "\n";
+		std::cout << "z = " << z << "\n";
+		std::cout << "tester = " << tester << "\n";
 
+		// loop for determining and creating the correct string
 		for (int i = 0; i < p; i++) {
 			for (double j = 1; j <= x+1; j++) {
+				std::cout << "J*tester/x = " << (j * (tester / x)) << "\n";
 				if (a <= (j * (tester / x))) {
+					std::cout << "in the if\n";
 					append = (j - 1);
 					tester = ((j * tester) / x);
 					break;
-				}
+				} 
 				else {
-					a = a - (tester / x);
-					tester = tester - (tester / x);
+					a = a - (j * (tester / x));
+					tester = tester - (j * (tester / x));
 				}
 			}
+
+			//a = a - (j * (tester / x));
+			//tester = tester - (j * (tester / x));
+
 			ret->c = this->index(append);
 
+			// moving the pointer forward in the string 
+			// and 'saving' the information
 			if (i != p - 1) {
 				OneString* temp = new OneString();
 				ret->s = temp;
@@ -160,27 +183,29 @@ int main()
 	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
 
 	/* test area start */
-	int m = 18;
-	String* tester = b.nString(m);
+	int m = 3;
+	String* tester = a.nString(m);
 
-	int n = 22;
-	String* tester2 = b.nString(n);
+	int n = 4;
+	String* tester2 = a.nString(n);
 
-	std::cout << "nstring test with m = " << m << ": ";
+	std::cout << "\n(3 char) nstring test with m = " << m << ": ";
+	tester->print();
+
+	std::cout << "\n(3 char) nstring test with n = " << n << ": ";
 	tester2->print();
 
-	std::cout << "\nnstring test with n = " << n << ": ";
-	tester->print();
+
+	int o = 18;
+	String* testerb = b.nString(o);
+
+	int p = 22;
+	String* testerb2 = b.nString(p);
+
+	std::cout << "\n\n(2 char) nstring test with m = " << o << ": ";
+	testerb->print();
+
+	std::cout << "\n(2 char) nstring test with n = " << p << ": ";
+	testerb2->print();
 	/* test area end */
-
-	// Test code for char, string, and print function
-	Char test = Char('t');
-	Char test2 = Char('e');
-	Char test3 = Char('s');
-	epsilon e = epsilon();
-
-	std::cout << "\n\ntest: ";
-	OneString testString = OneString(test, new OneString(test2,  new OneString(test3, new OneString(test, &e))));
-
-	testString.print();
 }
