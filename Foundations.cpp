@@ -98,25 +98,30 @@ public:
 		else return(a->index(i - 1));
 	}
 	String* nString(int in) {
-		// deal with the trivial case
-		if (in == 0) {
+		// deal with the trivial cases
+		if (in == 1) {
 			return new epsilon();
+		}
+		else if (in == 2) {
+			return new OneString(Char(this->index(0)), new epsilon());
 		}
 
 		double z = in; // index of the desired string
 		double x = this->size(); // number of characters in the alphabet
-		
+	
 		double p = 0;	// max power of x so that (x^p < z)
 						// also the length of the desired string
 
 		double a = 0; // index of the desired string in the list of Strings of the correct length
 
 		// setting p to the correct power
+		int tracker = 1;
 		for (double i = 0; i < 10; i++) {
-			if (std::pow(x, i) > z) {
-				p = (i-1);
+			if (tracker > z) {
+				p = (i - 1);
 				break;
 			}
+			tracker += std::pow(x, i);
 		}
 
 		// getting the correct index of the set of strings of correct length
@@ -127,6 +132,7 @@ public:
 		}
 		a = temp - (sum - z);
 
+
 		// creating the returning string and a pointer to it
 		// in order to change the values.
 		OneString* ret1 = new OneString();
@@ -135,30 +141,28 @@ public:
 		int append = 0;
 		int tester = (pow(x, p));
 
+		/* debug help
 		std::cout << "\nx = " << x << "\n";
 		std::cout << "p = " << p << "\n";
 		std::cout << "a = " << a << "\n";
 		std::cout << "z = " << z << "\n";
 		std::cout << "tester = " << tester << "\n";
+		*/
 
 		// loop for determining and creating the correct string
-		for (int i = 0; i < p; i++) {
+		for (int i = 0; i <= p - 1; i++) {
 			for (double j = 1; j <= x+1; j++) {
-				std::cout << "J*tester/x = " << (j * (tester / x)) << "\n";
 				if (a <= (j * (tester / x))) {
-					std::cout << "in the if\n";
 					append = (j - 1);
-					tester = ((j * tester) / x);
+					a = a - (((j - 1) * tester) / x);
+					tester = ((tester) / x);
 					break;
-				} 
-				else {
-					a = a - (j * (tester / x));
-					tester = tester - (j * (tester / x));
 				}
 			}
+			
+			//a = (temp - (sum - z)) / x;
+			//tester = (pow(x, p)) / x;
 
-			//a = a - (j * (tester / x));
-			//tester = tester - (j * (tester / x));
 
 			ret->c = this->index(append);
 
@@ -170,6 +174,7 @@ public:
 				ret = temp;
 			}
 		}
+		// return the constructed string
 		return ret1;
 	}
 };
@@ -183,10 +188,10 @@ int main()
 	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
 
 	/* test area start */
-	int m = 3;
+	int m = 14;
 	String* tester = a.nString(m);
 
-	int n = 4;
+	int n = 15;
 	String* tester2 = a.nString(n);
 
 	std::cout << "\n(3 char) nstring test with m = " << m << ": ";
@@ -196,7 +201,7 @@ int main()
 	tester2->print();
 
 
-	int o = 18;
+	int o = 26;
 	String* testerb = b.nString(o);
 
 	int p = 22;
