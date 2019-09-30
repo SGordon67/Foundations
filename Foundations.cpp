@@ -3,6 +3,8 @@
 #include <string>
 #include <cmath>
 
+using namespace std;
+
 class Char {
 public:
 	char c;
@@ -108,10 +110,8 @@ public:
 
 		double z = in; // index of the desired string
 		double x = this->size(); // number of characters in the alphabet
-	
 		double p = 0;	// max power of x so that (x^p < z)
 						// also the length of the desired string
-
 		double a = 0; // index of the desired string in the list of Strings of the correct length
 
 		// setting p to the correct power
@@ -132,16 +132,15 @@ public:
 		}
 		a = temp - (sum - z);
 
-
 		// creating the returning string and a pointer to it
 		// in order to change the values.
 		OneString* ret1 = new OneString();
 		OneString* ret = ret1;
-		// values i'll need for convenience
+		// vars i'll need for convenience
 		int append = 0;
 		int tester = (pow(x, p));
 
-		/* debug help
+		/*	//debug help
 		std::cout << "\nx = " << x << "\n";
 		std::cout << "p = " << p << "\n";
 		std::cout << "a = " << a << "\n";
@@ -159,11 +158,6 @@ public:
 					break;
 				}
 			}
-			
-			//a = (temp - (sum - z)) / x;
-			//tester = (pow(x, p)) / x;
-
-
 			ret->c = this->index(append);
 
 			// moving the pointer forward in the string 
@@ -179,17 +173,38 @@ public:
 	}
 };
 
+// DFA Class
+template <class State>
+class DFA {
+public:
+	bool (*Q)(State);
+	State q0;
+	State(*Delta)(State, char);
+	bool (*F)(State);
+
+	DFA(bool (*Q)(State), State q0, State(*Delta)(State, char), bool (*F)(State))
+		: Q(Q), q0(q0), Delta(Delta), F(F) {};
+
+	bool accepts(string s) {
+		auto len = s.length();
+		auto qi = q0;
+		auto i = 0;
+		while (i < len) {
+			qi = Delta(qi, s[i]);
+			i++;
+		}
+		return F(qi);
+	}
+};
+
 int main()
 {
-	// binary ( 2 char )
+	// binary (2 char)
 	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
-
 	// 3 char alphabet
 	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new EmptyAlphabet())));
-
 	// 4 char alphabet
 	SingleAlphabet c = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new SingleAlphabet(Char('3'), new EmptyAlphabet()))));
-
 	/* test area start */
 	int m = 26;
 	int n = 22;
@@ -219,4 +234,18 @@ int main()
 	testerc2->print();
 	std::cout << std::endl;
 	/* test area end */
+
+	auto ex =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			0,
+			[](int qi, char c) {
+		if (qi == 0) { return 1; }
+		else { return 0; }},
+			[](int qi) { return qi == 0; });
+
+	std::cout << ex->accepts("") << " should be " << true << endl;
+	std::cout << ex->accepts("0") << " should be " << false << endl;
+	std::cout << ex->accepts("00") << " should be " << true << endl;
+	std::cout << ex->accepts("110") << " should be " << false << endl;
 }
