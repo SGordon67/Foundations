@@ -195,7 +195,7 @@ int main()
 	int n = 22;
 	String* tester = a.nString(m);
 	String* tester2 = a.nString(n);
-	std::cout << "\n\n(2 char) nstring test with m = " << m << ": ";
+	std::cout << "\n(2 char) nstring test with m = " << m << ": ";
 	tester->print();
 	std::cout << "\n(2 char) nstring test with n = " << n << ": ";
 	tester2->print();
@@ -210,12 +210,13 @@ int main()
 	testerb2->print();
 
 	int q = 21;
-	int r = 38;
+	int r = 51;
 	String* testerc = c.nString(q);
 	String* testerc2 = c.nString(r);
 	std::cout << "\n(4 char) nstring test with q = " << q << ": ";
 	testerc->print();
 	std::cout << "\n(4 char) nstring test with r = " << r << ": ";
 	testerc2->print();
+	std::cout << std::endl;
 	/* test area end */
 }
