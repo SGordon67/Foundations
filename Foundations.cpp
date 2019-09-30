@@ -181,36 +181,41 @@ public:
 
 int main()
 {
-	// 3 char alphabet
-	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'),  new SingleAlphabet(Char('2'), new EmptyAlphabet())));
-
 	// binary ( 2 char )
-	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
+	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
+
+	// 3 char alphabet
+	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new EmptyAlphabet())));
+
+	// 4 char alphabet
+	SingleAlphabet c = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new SingleAlphabet(Char('3'), new EmptyAlphabet()))));
 
 	/* test area start */
-	int m = 14;
+	int m = 26;
+	int n = 22;
 	String* tester = a.nString(m);
-
-	int n = 15;
 	String* tester2 = a.nString(n);
-
-	std::cout << "\n(3 char) nstring test with m = " << m << ": ";
+	std::cout << "\n\n(2 char) nstring test with m = " << m << ": ";
 	tester->print();
-
-	std::cout << "\n(3 char) nstring test with n = " << n << ": ";
+	std::cout << "\n(2 char) nstring test with n = " << n << ": ";
 	tester2->print();
 
-
-	int o = 26;
+	int o = 21;
+	int p = 38;
 	String* testerb = b.nString(o);
-
-	int p = 22;
 	String* testerb2 = b.nString(p);
-
-	std::cout << "\n\n(2 char) nstring test with m = " << o << ": ";
+	std::cout << "\n(3 char) nstring test with o = " << o << ": ";
 	testerb->print();
-
-	std::cout << "\n(2 char) nstring test with n = " << p << ": ";
+	std::cout << "\n(3 char) nstring test with p = " << p << ": ";
 	testerb2->print();
+
+	int q = 21;
+	int r = 38;
+	String* testerc = c.nString(q);
+	String* testerc2 = c.nString(r);
+	std::cout << "\n(4 char) nstring test with q = " << q << ": ";
+	testerc->print();
+	std::cout << "\n(4 char) nstring test with r = " << r << ": ";
+	testerc2->print();
 	/* test area end */
 }
