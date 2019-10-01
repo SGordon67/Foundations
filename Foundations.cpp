@@ -25,7 +25,7 @@ class epsilon : public String {
 public:
 	epsilon() {}
 	bool isEmpty() { return true; }
-	Char fChar() { throw new _exception; }
+	Char fChar() { return Char('E'); }
 	String* next() { throw new _exception; }
 	void print() { std::cout << 'E'; }
 };
@@ -81,9 +81,9 @@ public:
 };
 
 class SingleAlphabet : public Alphabet {
+public:
 	Char c;
 	Alphabet* a;
-public:
 	SingleAlphabet(Char c, SingleAlphabet* a) {
 		this->c = c;
 		this->a = a;
@@ -175,23 +175,27 @@ public:
 
 // DFA Class
 template <class State>
-class DFA {
+class DFA{
 public:
 	bool (*Q)(State);
 	State q0;
-	State(*Delta)(State, char);
+	State(*Delta)(State, Char);
 	bool (*F)(State);
 
-	DFA(bool (*Q)(State), State q0, State(*Delta)(State, char), bool (*F)(State))
-		: Q(Q), q0(q0), Delta(Delta), F(F) {};
+	DFA(bool (*Q)(State), State q0, State (*Delta)(State, Char), bool (*F)(State)){
+		this->Q = Q;
+		this->q0 = q0;
+		this->Delta = Delta;
+		this->F = F;
+	};
 
-	bool accepts(string s) {
-		auto len = s.length();
-		auto qi = q0;
-		auto i = 0;
-		while (i < len) {
-			qi = Delta(qi, s[i]);
-			i++;
+	bool accepts(String* inputString) {
+		State qi = this->q0;
+		String* temp = inputString;
+
+		while (temp->fChar().c != 'E') {
+			qi = (*Delta)(qi, temp->fChar());
+			temp = temp->next();
 		}
 		return F(qi);
 	}
@@ -235,17 +239,20 @@ int main()
 	std::cout << std::endl;
 	/* test area end */
 
+	// even length string
 	auto ex =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
 			0,
-			[](int qi, char c) {
+			[](int qi, Char c) {
 		if (qi == 0) { return 1; }
 		else { return 0; }},
 			[](int qi) { return qi == 0; });
 
-	std::cout << ex->accepts("") << " should be " << true << endl;
-	std::cout << ex->accepts("0") << " should be " << false << endl;
-	std::cout << ex->accepts("00") << " should be " << true << endl;
-	std::cout << ex->accepts("110") << " should be " << false << endl;
+	OneString* startTest = new OneString(Char('0'), new epsilon());
+
+	std::cout << ex->accepts(startTest) << " should be " << false << endl;
+	//std::cout << ex->accepts("0") << " should be " << false << endl;
+	//std::cout << ex->accepts("00") << " should be " << true << endl;
+	//std::cout << ex->accepts("1100") << " should be " << true << endl;
 }
