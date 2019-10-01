@@ -249,9 +249,25 @@ int main()
 		else { return 0; }},
 			[](int qi) { return qi == 0; });
 
+	auto ex2 =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			0,
+			[](int qi, Char c) {
+				if (qi == 0) {
+					if (c.c == '0') { return 0; }
+					else return 1;
+				}
+				else if (c.c == '0') { return 0; }
+				else return 1;
+			},
+			[](int qi) { return qi == 0; });
+
 	OneString* startTest = new OneString(Char('0'), new epsilon());
 
 	std::cout << ex->accepts(startTest) << " should be " << false << endl;
+
+	std::cout << ex2->accepts(startTest) << " should be " << true << endl;
 	//std::cout << ex->accepts("0") << " should be " << false << endl;
 	//std::cout << ex->accepts("00") << " should be " << true << endl;
 	//std::cout << ex->accepts("1100") << " should be " << true << endl;
