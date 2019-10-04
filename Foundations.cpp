@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <list>
 #include <string>
 #include <cmath>
@@ -21,13 +21,14 @@ public:
 	virtual void print() {};
 };
 
-class epsilon : public OneString {
+class epsilon : public String {
 public:
+	Char ep = Char('E');
 	epsilon() {}
 	bool isEmpty() { return true; }
-	Char fChar() { return Char('E'); }
+	Char fChar() { return ep; }
 	String* next() { throw new _exception; }
-	void print() { std::cout << 'E'; }
+	void print() {  }
 };
 
 class OneString : public String{
@@ -38,23 +39,26 @@ public:
 		this->c = Char('n');
 		this->s = new epsilon();
 	}
-	OneString(Char c, OneString* s) {
-		this->c = c;
-		this->s = s;
-	}
 	OneString(Char c, String* s) {
 		this->c = c;
 		this->s = s;
 	}
+
 	bool isEmpty() {
 		return false;
 	}
 	Char fChar() { return this->c; }
 	String* next() { return this->s; }
 
-	bool equals(OneString a) {
+	/*bool equals(OneString a) {
+		OneString* temp = this;
 
-	}
+		if (this->c.c == a.c.c) {
+			temp = temp->next();
+			a = a.next();
+
+		}
+	}*/
 
 	void print() {
 		std::string a;
@@ -254,20 +258,19 @@ int main()
 	// DFA example that only accepts the empty string
 	auto mtAccept =
 		new DFA<int>
-		([](int qi) { return qi == 0 || qi == 1 || qi == 2; },
+		([](int qi) { return qi == 0 || qi == 1; },
 			0,
 			[](int qi, Char c) {
 		if (qi == 0) {
 			if (c.c == 'E') {
-				return 1;
+				return 0;
 			}
-			else return 2;
-		}
-		else { return 2; }},
-			[](int qi) { return qi == 1; });
+			else return 1;
+		}},
+			[](int qi) { return qi == 0; });
 
 	// DFA for even length string
-	auto ex =
+	auto evenL =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
 			0,
@@ -277,7 +280,7 @@ int main()
 			[](int qi) { return qi == 0; });
 
 	// DFA for even number (binary)
-	auto ex2 =
+	auto evenN =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
 			0,
@@ -292,17 +295,18 @@ int main()
 			[](int qi) { return qi == 0; });
 
 	OneString* test1 = new OneString(Char('0'), new epsilon());
-	//OneString* test2 = new epsilon();
+	epsilon* test2 = new epsilon();
 
-	std::cout << ex->accepts(test1) << " should be " << false << endl;
+	std::cout << evenL->accepts(test1) << " should be " << false << endl;
 
-	std::cout << ex2->accepts(test1) << " should be " << true << endl;
+	std::cout << evenN->accepts(test1) << " should be " << true << endl;
 
-	std::cout << noAccept->accepts(test1) << " should be " << true << endl;
+	std::cout << noAccept->accepts(test1) << " should be " << false << endl;
 
-	std::cout << ex2->accepts(test1) << " should be " << true << endl;
+	std::cout << mtAccept->accepts(test1) << " should be " << false << endl;
+	std::cout << mtAccept->accepts(test2) << " should be " << true << endl;
 
-	std::cout << ex2->accepts(test1) << " should be " << true << endl;
+
 	//std::cout << ex->accepts("0") << " should be " << false << endl;
 	//std::cout << ex->accepts("00") << " should be " << true << endl;
 	//std::cout << ex->accepts("1100") << " should be " << true << endl;
