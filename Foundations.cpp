@@ -21,7 +21,7 @@ public:
 	virtual void print() {};
 };
 
-class epsilon : public String {
+class epsilon : public OneString {
 public:
 	epsilon() {}
 	bool isEmpty() { return true; }
@@ -51,6 +51,10 @@ public:
 	}
 	Char fChar() { return this->c; }
 	String* next() { return this->s; }
+
+	bool equals(OneString a) {
+
+	}
 
 	void print() {
 		std::string a;
@@ -239,7 +243,30 @@ int main()
 	std::cout << std::endl;
 	/* test area end */
 
-	// even length string
+	// DFA example that accepts no strings
+	auto noAccept =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			0,
+			[](int qi, Char c) { return 0; },
+			[](int qi) { return qi == 1; });
+
+	// DFA example that only accepts the empty string
+	auto mtAccept =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1 || qi == 2; },
+			0,
+			[](int qi, Char c) {
+		if (qi == 0) {
+			if (c.c == 'E') {
+				return 1;
+			}
+			else return 2;
+		}
+		else { return 2; }},
+			[](int qi) { return qi == 1; });
+
+	// DFA for even length string
 	auto ex =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
@@ -249,6 +276,7 @@ int main()
 		else { return 0; }},
 			[](int qi) { return qi == 0; });
 
+	// DFA for even number (binary)
 	auto ex2 =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
@@ -263,11 +291,18 @@ int main()
 			},
 			[](int qi) { return qi == 0; });
 
-	OneString* startTest = new OneString(Char('0'), new epsilon());
+	OneString* test1 = new OneString(Char('0'), new epsilon());
+	//OneString* test2 = new epsilon();
 
-	std::cout << ex->accepts(startTest) << " should be " << false << endl;
+	std::cout << ex->accepts(test1) << " should be " << false << endl;
 
-	std::cout << ex2->accepts(startTest) << " should be " << true << endl;
+	std::cout << ex2->accepts(test1) << " should be " << true << endl;
+
+	std::cout << noAccept->accepts(test1) << " should be " << true << endl;
+
+	std::cout << ex2->accepts(test1) << " should be " << true << endl;
+
+	std::cout << ex2->accepts(test1) << " should be " << true << endl;
 	//std::cout << ex->accepts("0") << " should be " << false << endl;
 	//std::cout << ex->accepts("00") << " should be " << true << endl;
 	//std::cout << ex->accepts("1100") << " should be " << true << endl;
