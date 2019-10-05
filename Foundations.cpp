@@ -3,6 +3,7 @@
 #include <string>
 #include <cmath>
 #include <functional>
+#include <utility>
 
 using namespace std;
 
@@ -149,14 +150,6 @@ public:
 		int append = 0;
 		int tester = (pow(x, p));
 
-		/*	//debug help
-		std::cout << "\nx = " << x << "\n";
-		std::cout << "p = " << p << "\n";
-		std::cout << "a = " << a << "\n";
-		std::cout << "z = " << z << "\n";
-		std::cout << "tester = " << tester << "\n";
-		*/
-
 		// loop for determining and creating the correct string
 		for (int i = 0; i <= p - 1; i++) {
 			for (double j = 1; j <= x+1; j++) {
@@ -187,6 +180,7 @@ template <class State>
 class DFA{
 public:
 	function<bool(State)> Q;
+
 	State q0;
 	function<State(State, Char)> Delta;
 	function<bool(State)> F;
@@ -212,9 +206,53 @@ public:
 		this->F = (	[=](int qi) { return qi == 0; });
 	}
 
+	/*
+	// constructor for DFA union
+	DFA<pair<State, State>>  unionDFA(DFA<State> dfa1, DFA<State> dfa2){
+
+		// combine alphabets
+
+		// return dfa
+		return 
+		this->Q = ([=](int qi) { return qi == 0 || qi == 1; });
+		this->q0 = 0;
+		this->Delta = ([=](int qi, Char c) {
+			if (qi == 0) {
+				if (c.c == tChar) {
+					return 0;
+				}
+				else return 1;
+			}});
+		this->F = ([=](int qi) { return qi == 0; });
+	}*/
+
+	// find an accepted string within the DFA
+	auto acceptedString() {
+		list<State> visitedStates;
+		State qi = q0;
+		if (F(qi)) return new epsilon();
+
+		return(this->pAccept(qi, visitedStates);)
+	}
+	auto pAccept(State qi, list<State>* visitedStates) {
+		if (F(qi)) return true;
+		for (auto x : visitedStates) {
+			if (qi == x) {
+				return false;
+			}
+		}
+		visitedStates->push_back(qi);
+
+		for (int i = 0; i <= singleAlphabet->length()) {
+			if (pAccept(Delta(qi, singleAlphabet[i]), visitedStates)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	// function that is given a char, 
 	// returns a dfa that returns strings with that char
-
 	bool accepts(String* inputString) {
 		State qi = this->q0;
 		String* temp = inputString;
