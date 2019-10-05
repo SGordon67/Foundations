@@ -5,7 +5,6 @@
 #include <functional>
 #include <utility>
 #include <vector>
-#include <list>
 
 using namespace std;
 
@@ -298,30 +297,51 @@ public:
 	}*/
 
 	
+	// return pair of stack and bool
+
+	// stack will be a
+
 	// find an accepted string within the DFA
 	auto acceptedString() {
 		vector<State> visitedStates;
 		State qi = q0;
-		if (F(qi)) return new epsilon();
+		//if (F(qi)) return new epsilon();
 
 		return(this->pAccept(qi, visitedStates));
 	}
-	auto pAccept(State qi, list<State>* visitedStates) {
-		if (F(qi)) return true;
+	auto pAccept(State qi, vector<State> &visitedStates) {
+		if (F(qi)) { 
+			return true; 
+		}
 
 		for (int i = 0; i < visitedStates.size(); i++) {
 			if (qi == visitedStates[i]) {
 				return false;
 			}
 		}
-		visitedStates->push_back(qi);
+		visitedStates.push_back(qi);
 
-		for (int i = 0; i <= v.size(); i++) {
+		for (int i = 0; i < v.size(); i++) {
 			if (pAccept(Delta(qi, v[i]), visitedStates)) {
+				cout << v[i].c;
 				return true;
 			}
 		}
 		return false;
+	}
+
+	// function to trace the tree given a string
+	bool trace(String* inputString) {
+		State qi = this->q0;
+		String* temp = inputString;
+		cout << qi;
+		while (temp->fChar().c != 'E') {
+			cout << qi;
+			qi = Delta(qi, temp->fChar());
+			temp = temp->next();
+			
+		}
+		return F(qi);
 	}
 
 	// function that is given a char, 
@@ -352,6 +372,7 @@ int main()
 	vector<Char> a{ Char('0'), Char('1') };
 	vector<Char> b{ Char('0'), Char('1'), Char('2') };
 	vector<Char> c{ Char('0'), Char('1'), Char('2'), Char('3') };
+	vector<Char> name{ Char('s'), Char('c'), Char('o'), Char('t') };
 
 	/* test area start */
 	int m = 26;
@@ -425,18 +446,60 @@ int main()
 			a,
 			0,
 			[](int qi, Char c) {
-				if (qi == 0) {
-					if (c.c == '0') { return 0; }
-					else return 1;
-				}
-				else if (c.c == '0') { return 0; }
-				else return 1;
-			},
+		if (qi == 0) {
+			if (c.c == '0') { return 0; }
+			else return 1;
+		}
+		else if (c.c == '0') { return 0; }
+		else return 1;
+	},
 			[](int qi) { return qi == 0; });
 
-	char ctemp = 'A';
+	// DFA that accepts my name kinda
+	auto nameDFA =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1 || qi == 2 || qi == 3 || qi == 4 || qi == 5; },
+			name,
+			0,
+			[](int qi, Char c) {
+		if (qi == 0) {
+			if (c.c == 's') {
+				return 1;
+			}
+			else return 0;
+		}
+		else if (qi == 1) {
+			if (c.c == 'c') {
+				return 2;
+			}
+			else return 0;
+		}
+		else if (qi == 2) {
+			if (c.c == 'o') {
+				return 3;
+			}
+			else return 0;
+		}
+		else if (qi == 3) {
+			if (c.c == 't') {
+				return 4;
+			}
+			else return 0;
+		}
+		else if (qi == 4) {
+			if (c.c == 't') {
+				return 5;
+			}
+			else return 0;
+		}
+		else if (qi == 5) {
+			return 5;
+		}
+		else { return 0; }},
+			[](int qi) { return qi == 5; });
+
 	//DFA onlyOne = evenN->charDfa(ctemp);
-	auto onlyOne = new DFA<int>(ctemp);
+	auto onlyOne = new DFA<int>('A');
 
 
 	OneString* test1 = new OneString(Char('0'), new epsilon());
@@ -454,8 +517,8 @@ int main()
 
 	cout << onlyOne->accepts(test3) << " should be " << true << endl;
 
+	cout << noAccept->acceptedString() << " should be " << false << endl;
+	cout << nameDFA->acceptedString() << " should be " << true << endl;
 
-	//std::cout << ex->accepts("0") << " should be " << false << endl;
-	//std::cout << ex->accepts("00") << " should be " << true << endl;
-	//std::cout << ex->accepts("1100") << " should be " << true << endl;
+	onlyOne->trace(test3);
 }
