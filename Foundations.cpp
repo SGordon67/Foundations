@@ -4,6 +4,8 @@
 #include <cmath>
 #include <functional>
 #include <utility>
+#include <vector>
+#include <list>
 
 using namespace std;
 
@@ -69,12 +71,14 @@ public:
 	}
 };
 
+/*
 class Alphabet {
 public:
 	virtual int size() { return 0; }
 	virtual Char index(int i) { return 0; }
 	virtual String* nString(int i) { return 0; }
 };
+
 
 class EmptyAlphabet : public Alphabet {
 public:
@@ -174,19 +178,86 @@ public:
 		return ret1;
 	}
 };
+*/
+
+String* nString(int in, vector<Char> myVector) {
+	// deal with the trivial cases
+	if (in == 1) {
+		return new epsilon();
+	}
+	else if (in == 2) {
+		return new OneString(Char(myVector[0]), new epsilon());
+	}
+
+	double z = in; // index of the desired string
+	double x = myVector.size(); // number of characters in the alphabet
+	double p = 0;	// max power of x so that (x^p < z)
+					// also the length of the desired string
+	double a = 0; // index of the desired string in the list of Strings of the correct length
+
+	// setting p to the correct power
+	int tracker = 1;
+	for (double i = 0; i < 10; i++) {
+		if (tracker > z) {
+			p = (i - 1);
+			break;
+		}
+		tracker += std::pow(x, i);
+	}
+
+	// getting the correct index of the set of strings of correct length
+	int temp = pow(x, p);
+	int sum = 0;
+	for (int i = p; i >= 0; i--) {
+		sum += pow(x, i);
+	}
+	a = temp - (sum - z);
+
+	// creating the returning string and a pointer to it
+	// in order to change the values.
+	OneString* ret1 = new OneString();
+	OneString* ret = ret1;
+	// vars i'll need for convenience
+	int append = 0;
+	int tester = (pow(x, p));
+
+	// loop for determining and creating the correct string
+	for (int i = 0; i <= p - 1; i++) {
+		for (double j = 1; j <= x + 1; j++) {
+			if (a <= (j * (tester / x))) {
+				append = (j - 1);
+				a = a - (((j - 1) * tester) / x);
+				tester = ((tester) / x);
+				break;
+			}
+		}
+		ret->c = myVector[append];
+
+		// moving the pointer forward in the string 
+		// and 'saving' the information
+		if (i != p - 1) {
+			OneString* temp = new OneString();
+			ret->s = temp;
+			ret = temp;
+		}
+	}
+	// return the constructed string
+	return ret1;
+}
 
 // DFA Class
 template <class State>
 class DFA{
 public:
 	function<bool(State)> Q;
-
+	vector<Char> v;
 	State q0;
 	function<State(State, Char)> Delta;
 	function<bool(State)> F;
 
-	DFA(function<bool(State)> Q, State q0, function<State(State, Char)> Delta, function<bool(State)> F){
+	DFA(function<bool(State)> Q, vector<Char> v, State q0, function<State(State, Char)> Delta, function<bool(State)> F){
 		this->Q = Q;
+		this->v = v;
 		this->q0 = q0;
 		this->Delta = Delta;
 		this->F = F;
@@ -226,25 +297,27 @@ public:
 		this->F = ([=](int qi) { return qi == 0; });
 	}*/
 
+	
 	// find an accepted string within the DFA
 	auto acceptedString() {
-		list<State> visitedStates;
+		vector<State> visitedStates;
 		State qi = q0;
 		if (F(qi)) return new epsilon();
 
-		return(this->pAccept(qi, visitedStates);)
+		return(this->pAccept(qi, visitedStates));
 	}
 	auto pAccept(State qi, list<State>* visitedStates) {
 		if (F(qi)) return true;
-		for (auto x : visitedStates) {
-			if (qi == x) {
+
+		for (int i = 0; i < visitedStates.size(); i++) {
+			if (qi == visitedStates[i]) {
 				return false;
 			}
 		}
 		visitedStates->push_back(qi);
 
-		for (int i = 0; i <= singleAlphabet->length()) {
-			if (pAccept(Delta(qi, singleAlphabet[i]), visitedStates)) {
+		for (int i = 0; i <= v.size(); i++) {
+			if (pAccept(Delta(qi, v[i]), visitedStates)) {
 				return true;
 			}
 		}
@@ -267,17 +340,24 @@ public:
 
 int main()
 {
+	/*
 	// binary (2 char)
 	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
 	// 3 char alphabet
 	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new EmptyAlphabet())));
 	// 4 char alphabet
 	SingleAlphabet c = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new SingleAlphabet(Char('3'), new EmptyAlphabet()))));
+	*/
+
+	vector<Char> a{ Char('0'), Char('1') };
+	vector<Char> b{ Char('0'), Char('1'), Char('2') };
+	vector<Char> c{ Char('0'), Char('1'), Char('2'), Char('3') };
+
 	/* test area start */
 	int m = 26;
 	int n = 22;
-	String* tester = a.nString(m);
-	String* tester2 = a.nString(n);
+	String* tester = nString(m, a);
+	String* tester2 = nString(n, a);
 	std::cout << "\n(2 char) nstring test with m = " << m << ": ";
 	tester->print();
 	std::cout << "\n(2 char) nstring test with n = " << n << ": ";
@@ -285,8 +365,8 @@ int main()
 
 	int o = 21;
 	int p = 38;
-	String* testerb = b.nString(o);
-	String* testerb2 = b.nString(p);
+	String* testerb = nString(o, b);
+	String* testerb2 = nString(p, b);
 	std::cout << "\n(3 char) nstring test with o = " << o << ": ";
 	testerb->print();
 	std::cout << "\n(3 char) nstring test with p = " << p << ": ";
@@ -294,8 +374,8 @@ int main()
 
 	int q = 21;
 	int r = 51;
-	String* testerc = c.nString(q);
-	String* testerc2 = c.nString(r);
+	String* testerc = nString(q, c);
+	String* testerc2 = nString(r, c);
 	std::cout << "\n(4 char) nstring test with q = " << q << ": ";
 	testerc->print();
 	std::cout << "\n(4 char) nstring test with r = " << r << ": ";
@@ -307,6 +387,7 @@ int main()
 	auto noAccept =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
+			a,
 			0,
 			[](int qi, Char c) { return 0; },
 			[](int qi) { return qi == 1; });
@@ -315,6 +396,7 @@ int main()
 	auto mtAccept =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
+			a,
 			0,
 			[](int qi, Char c) {
 		if (qi == 0) {
@@ -329,6 +411,7 @@ int main()
 	auto evenL =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
+			a,
 			0,
 			[](int qi, Char c) {
 		if (qi == 0) { return 1; }
@@ -339,6 +422,7 @@ int main()
 	auto evenN =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
+			a,
 			0,
 			[](int qi, Char c) {
 				if (qi == 0) {
