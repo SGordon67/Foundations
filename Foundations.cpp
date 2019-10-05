@@ -2,6 +2,7 @@
 #include <list>
 #include <string>
 #include <cmath>
+#include <functional>
 
 using namespace std;
 
@@ -185,24 +186,41 @@ public:
 template <class State>
 class DFA{
 public:
-	bool (*Q)(State);
+	function<bool(State)> Q;
 	State q0;
-	State(*Delta)(State, Char);
-	bool (*F)(State);
+	function<State(State, Char)> Delta;
+	function<bool(State)> F;
 
-	DFA(bool (*Q)(State), State q0, State (*Delta)(State, Char), bool (*F)(State)){
+	DFA(function<bool(State)> Q, State q0, function<State(State, Char)> Delta, function<bool(State)> F){
 		this->Q = Q;
 		this->q0 = q0;
 		this->Delta = Delta;
 		this->F = F;
 	};
 
+	// constructor for DFA that only takes given char
+	DFA(char tChar) {
+		this->Q = ([=](int qi) { return qi == 0 || qi == 1; });
+		this->q0 = 0;
+		this->Delta = ([=](int qi, Char c) {
+			if (qi == 0) {
+				if (c.c == tChar) {
+					return 0;
+				}
+				else return 1;
+			}});
+		this->F = (	[=](int qi) { return qi == 0; });
+	}
+
+	// function that is given a char, 
+	// returns a dfa that returns strings with that char
+
 	bool accepts(String* inputString) {
 		State qi = this->q0;
 		String* temp = inputString;
 
 		while (temp->fChar().c != 'E') {
-			qi = (*Delta)(qi, temp->fChar());
+			qi = Delta(qi, temp->fChar());
 			temp = temp->next();
 		}
 		return F(qi);
@@ -294,17 +312,25 @@ int main()
 			},
 			[](int qi) { return qi == 0; });
 
+	char ctemp = 'A';
+	//DFA onlyOne = evenN->charDfa(ctemp);
+	auto onlyOne = new DFA<int>(ctemp);
+
+
 	OneString* test1 = new OneString(Char('0'), new epsilon());
 	epsilon* test2 = new epsilon();
+	OneString* test3 = new OneString(Char('A'), new OneString(Char('A'), new epsilon()));
 
-	std::cout << evenL->accepts(test1) << " should be " << false << endl;
+	cout << evenL->accepts(test1) << " should be " << false << endl;
 
-	std::cout << evenN->accepts(test1) << " should be " << true << endl;
+	cout << evenN->accepts(test1) << " should be " << true << endl;
 
-	std::cout << noAccept->accepts(test1) << " should be " << false << endl;
+	cout << noAccept->accepts(test1) << " should be " << false << endl;
+	
+	cout << mtAccept->accepts(test1) << " should be " << false << endl;
+	cout << mtAccept->accepts(test2) << " should be " << true << endl;
 
-	std::cout << mtAccept->accepts(test1) << " should be " << false << endl;
-	std::cout << mtAccept->accepts(test2) << " should be " << true << endl;
+	cout << onlyOne->accepts(test3) << " should be " << true << endl;
 
 
 	//std::cout << ex->accepts("0") << " should be " << false << endl;
