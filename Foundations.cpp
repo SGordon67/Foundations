@@ -360,19 +360,20 @@ public:
 
 // function for returning the cimpliment of a given DFA
 template <class State>
-DFA<State> complimentDFA(DFA<State> inputDFA) {
+DFA<State> complimentDFA(DFA<State>* inputDFA) {
 
-	return DFA<State>(inputDFA.Q,
-		inputDFA.v,
-		inputDFA.q0,
-		inputDFA.Delta,
+	return DFA<State>(inputDFA->Q,
+		inputDFA->v,
+		inputDFA->q0,
+		inputDFA->Delta,
 		[=](State a) {
-			if (inputDFA.F(a) == true) {
-				return false
+			if (inputDFA->F(a) == true) {
+				return false;
 			} return true;
 		}
 		);
 }
+
 
 int main()
 {
@@ -385,16 +386,16 @@ int main()
 	SingleAlphabet c = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new SingleAlphabet(Char('3'), new EmptyAlphabet()))));
 	*/
 
-	vector<Char> a{ Char('0'), Char('1') };
-	vector<Char> b{ Char('0'), Char('1'), Char('2') };
-	vector<Char> c{ Char('0'), Char('1'), Char('2'), Char('3') };
+	vector<Char> binary{ Char('0'), Char('1') };
+	vector<Char> ternary{ Char('0'), Char('1'), Char('2') };
+	vector<Char> char4{ Char('0'), Char('1'), Char('2'), Char('3') };
 	vector<Char> name{ Char('s'), Char('c'), Char('o'), Char('t') };
-
+	vector<Char> decimal{ Char('0'), Char('1'), Char('2'), Char('3'), Char('4'), Char('5'), Char('6'), Char('7'), Char('8'), Char('9') };
 	/* test area start */
 	int m = 26;
 	int n = 22;
-	String* tester = nString(m, a);
-	String* tester2 = nString(n, a);
+	String* tester = nString(m, binary);
+	String* tester2 = nString(n, binary);
 	std::cout << "\n(2 char) nstring test with m = " << m << ": ";
 	tester->print();
 	std::cout << "\n(2 char) nstring test with n = " << n << ": ";
@@ -402,8 +403,8 @@ int main()
 
 	int o = 21;
 	int p = 38;
-	String* testerb = nString(o, b);
-	String* testerb2 = nString(p, b);
+	String* testerb = nString(o, ternary);
+	String* testerb2 = nString(p, ternary);
 	std::cout << "\n(3 char) nstring test with o = " << o << ": ";
 	testerb->print();
 	std::cout << "\n(3 char) nstring test with p = " << p << ": ";
@@ -411,8 +412,8 @@ int main()
 
 	int q = 21;
 	int r = 51;
-	String* testerc = nString(q, c);
-	String* testerc2 = nString(r, c);
+	String* testerc = nString(q, char4);
+	String* testerc2 = nString(r, char4);
 	std::cout << "\n(4 char) nstring test with q = " << q << ": ";
 	testerc->print();
 	std::cout << "\n(4 char) nstring test with r = " << r << ": ";
@@ -424,7 +425,7 @@ int main()
 	auto noAccept =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
-			a,
+			binary,
 			0,
 			[](int qi, Char c) { return 0; },
 			[](int qi) { return qi == 1; });
@@ -433,7 +434,7 @@ int main()
 	auto mtAccept =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
-			a,
+			binary,
 			0,
 			[](int qi, Char c) {
 		if (qi == 0) {
@@ -448,7 +449,7 @@ int main()
 	auto evenL =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
-			a,
+			binary,
 			0,
 			[](int qi, Char c) {
 		if (qi == 0) { return 1; }
@@ -459,7 +460,7 @@ int main()
 	auto evenN =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
-			a,
+			binary,
 			0,
 			[](int qi, Char c) {
 		if (qi == 0) {
@@ -514,17 +515,27 @@ int main()
 		else { return 0; }},
 			[](int qi) { return qi == 5; });
 
-	//DFA onlyOne = evenN->charDfa(ctemp);
+	// DFA that only accepts the given character
 	auto onlyOne = new DFA<int>('A');
 
+	// DFA for odd numbers (compliment of even numbers)
+	auto oddN = complimentDFA(evenN);
+
+	// DFA for odd length strings
+	auto oddL = complimentDFA(evenL);
 
 	OneString* test1 = new OneString(Char('0'), new epsilon());
 	epsilon* test2 = new epsilon();
 	OneString* test3 = new OneString(Char('A'), new OneString(Char('A'), new epsilon()));
 
+
 	cout << evenL->accepts(test1) << " should be " << false << endl;
+	cout << evenL->accepts(test2) << " should be " << true << endl;
+	cout << oddL.accepts(test1) << " should be " << true << endl;
+	cout << oddL.accepts(test2) << " should be " << false << endl;
 
 	cout << evenN->accepts(test1) << " should be " << true << endl;
+	cout << oddN.accepts(test1) << " should be " << false << endl;
 
 	cout << noAccept->accepts(test1) << " should be " << false << endl;
 	
@@ -537,4 +548,8 @@ int main()
 	cout << nameDFA->acceptedString() << " should be " << true << endl;
 
 	onlyOne->trace(test3);
+
+	
+
+
 }
