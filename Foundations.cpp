@@ -358,6 +358,22 @@ public:
 	}
 };
 
+// function for returning the cimpliment of a given DFA
+template <class State>
+DFA<State> complimentDFA(DFA<State> inputDFA) {
+
+	return DFA<State>(inputDFA.Q,
+		inputDFA.v,
+		inputDFA.q0,
+		inputDFA.Delta,
+		[=](State a) {
+			if (inputDFA.F(a) == true) {
+				return false
+			} return true;
+		}
+		);
+}
+
 int main()
 {
 	/*
