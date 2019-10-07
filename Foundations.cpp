@@ -1,4 +1,7 @@
-﻿#include <iostream>
+﻿// Scott Gordon
+// CS 3040 Foundations of Computer Science
+
+#include <iostream>
 #include <list>
 #include <string>
 #include <cmath>
