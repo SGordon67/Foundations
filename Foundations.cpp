@@ -56,131 +56,12 @@ public:
 	Char fChar() { return this->c; }
 	String* next() { return this->s; }
 
-	/*bool equals(OneString a) {
-		OneString* temp = this;
-
-		if (this->c.c == a.c.c) {
-			temp = temp->next();
-			a = a.next();
-
-		}
-	}*/
-
 	void print() {
 		std::string a;
 		std::cout << this->c.c;
 		this->s->print();
 	}
 };
-
-/*
-class Alphabet {
-public:
-	virtual int size() { return 0; }
-	virtual Char index(int i) { return 0; }
-	virtual String* nString(int i) { return 0; }
-};
-
-
-class EmptyAlphabet : public Alphabet {
-public:
-	EmptyAlphabet() {}
-	int size() { return 0; }
-	Char index(int i) { 
-		if (i == 0) { return(Char('E')); }
-		else std::cout << "Exception here!\n";
-	}
-	String* nString(int i) {
-		if (i == 0) { return (new epsilon()); }
-		else throw new _exception;
-	}
-};
-
-class SingleAlphabet : public Alphabet {
-public:
-	Char c;
-	Alphabet* a;
-	SingleAlphabet(Char c, SingleAlphabet* a) {
-		this->c = c;
-		this->a = a;
-	}
-	SingleAlphabet(Char c, Alphabet* a) {
-		this->c = c;
-		this->a = a;
-	}
-	int size() {
-		return 1 + (a->size());
-	}
-	Char index(int i) {
-		if (i == 0) { return c; }
-		else return(a->index(i - 1));
-	}
-	String* nString(int in) {
-		// deal with the trivial cases
-		if (in == 1) {
-			return new epsilon();
-		}
-		else if (in == 2) {
-			return new OneString(Char(this->index(0)), new epsilon());
-		}
-
-		double z = in; // index of the desired string
-		double x = this->size(); // number of characters in the alphabet
-		double p = 0;	// max power of x so that (x^p < z)
-						// also the length of the desired string
-		double a = 0; // index of the desired string in the list of Strings of the correct length
-
-		// setting p to the correct power
-		int tracker = 1;
-		for (double i = 0; i < 10; i++) {
-			if (tracker > z) {
-				p = (i - 1);
-				break;
-			}
-			tracker += std::pow(x, i);
-		}
-
-		// getting the correct index of the set of strings of correct length
-		int temp = pow(x, p);
-		int sum = 0;
-		for (int i = p; i >= 0; i--) {
-			sum += pow(x, i);
-		}
-		a = temp - (sum - z);
-
-		// creating the returning string and a pointer to it
-		// in order to change the values.
-		OneString* ret1 = new OneString();
-		OneString* ret = ret1;
-		// vars i'll need for convenience
-		int append = 0;
-		int tester = (pow(x, p));
-
-		// loop for determining and creating the correct string
-		for (int i = 0; i <= p - 1; i++) {
-			for (double j = 1; j <= x+1; j++) {
-				if (a <= (j * (tester / x))) {
-					append = (j - 1);
-					a = a - (((j - 1) * tester) / x);
-					tester = ((tester) / x);
-					break;
-				}
-			}
-			ret->c = this->index(append);
-
-			// moving the pointer forward in the string 
-			// and 'saving' the information
-			if (i != p - 1) {
-				OneString* temp = new OneString();
-				ret->s = temp;
-				ret = temp;
-			}
-		}
-		// return the constructed string
-		return ret1;
-	}
-};
-*/
 
 String* nString(int in, vector<Char> myVector) {
 	// deal with the trivial cases
@@ -281,28 +162,27 @@ public:
 
 	/*
 	// constructor for DFA union
-	DFA<pair<State, State>>  unionDFA(DFA<State> dfa1, DFA<State> dfa2){
+	template <class State>
+	DFA<std::pair<State, State>> unionDFA(DFA<State> dfa1, DFA<State> dfa2)
+	{
+		std::list<myChar> a = dfa1.alphabet;
+		std::list<myChar> b = dfa2.alphabet;
+		a.insert(a.end(), b.begin(), b.end()); // combine the alphabets of both DFAs
 
-		// combine alphabets
-
-		// return dfa
-		return 
-		this->Q = ([=](int qi) { return qi == 0 || qi == 1; });
-		this->q0 = 0;
-		this->Delta = ([=](int qi, Char c) {
-			if (qi == 0) {
-				if (c.c == tChar) {
-					return 0;
-				}
-				else return 1;
-			}});
-		this->F = ([=](int qi) { return qi == 0; });
+		return DFA<std::pair<State, State>>(
+			"Union of " + dfa1.name + " and " + dfa2.name,
+			[=](std::pair<State, State> a) -> bool { // function for possible states
+			return (dfa1.Q(a.first) && dfa2.Q(a.second));
+		},
+			a,                                                                    // alphabet
+			std::make_pair(dfa1.q0, dfa2.q0),                                     // start state, need to figure this one out
+			[=](std::pair<State, State> a, myChar b) -> std::pair<State, State> { // transition function; not correct as is
+			return (std::make_pair(dfa1.transFunc(a.first, b), dfa2.transFunc(a.second, b)));
+		},
+			[=](std::pair<State, State> a) { // accept states
+			return ((dfa1.F(a.first)) || (dfa2.F(a.second)));
+		});
 	}*/
-
-	
-	// return pair of stack and bool
-
-	// stack will be a
 
 	// find an accepted string within the DFA
 	auto acceptedString() {
@@ -361,7 +241,7 @@ public:
 	}
 };
 
-// function for returning the cimpliment of a given DFA
+// function for returning the compliment of a given DFA
 template <class State>
 DFA<State> complimentDFA(DFA<State>* inputDFA) {
 
