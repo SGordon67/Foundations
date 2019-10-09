@@ -260,21 +260,14 @@ DFA<State> complimentDFA(DFA<State>* inputDFA) {
 
 int main()
 {
-	/*
-	// binary (2 char)
-	SingleAlphabet a = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new EmptyAlphabet()));
-	// 3 char alphabet
-	SingleAlphabet b = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new EmptyAlphabet())));
-	// 4 char alphabet
-	SingleAlphabet c = SingleAlphabet(Char('0'), new SingleAlphabet(Char('1'), new SingleAlphabet(Char('2'), new SingleAlphabet(Char('3'), new EmptyAlphabet()))));
-	*/
 
 	vector<Char> binary{ Char('0'), Char('1') };
 	vector<Char> ternary{ Char('0'), Char('1'), Char('2') };
 	vector<Char> char4{ Char('0'), Char('1'), Char('2'), Char('3') };
 	vector<Char> name{ Char('s'), Char('c'), Char('o'), Char('t') };
 	vector<Char> decimal{ Char('0'), Char('1'), Char('2'), Char('3'), Char('4'), Char('5'), Char('6'), Char('7'), Char('8'), Char('9') };
-	/* test area start */
+
+	/* test area for task 3 start */
 	int m = 26;
 	int n = 22;
 	String* tester = nString(m, binary);
@@ -302,7 +295,7 @@ int main()
 	std::cout << "\n(4 char) nstring test with r = " << r << ": ";
 	testerc2->print();
 	std::cout << std::endl;
-	/* test area end */
+	/* test area for task 3 end */
 
 	// DFA example that accepts no strings
 	auto noAccept =
