@@ -138,7 +138,11 @@ public:
 	function<State(State, Char)> Delta;
 	function<bool(State)> F;
 
-	DFA(function<bool(State)> Q, vector<Char> v, State q0, function<State(State, Char)> Delta, function<bool(State)> F){
+	DFA(function<bool(State)> Q, 
+		vector<Char> v, 
+		State q0, 
+		function<State(State, Char)> Delta, 
+		function<bool(State)> F){
 		this->Q = Q;
 		this->v = v;
 		this->q0 = q0;
@@ -170,7 +174,6 @@ public:
 		a.insert(a.end(), b.begin(), b.end()); // combine the alphabets of both DFAs
 
 		return DFA<std::pair<State, State>>(
-			"Union of " + dfa1.name + " and " + dfa2.name,
 			[=](std::pair<State, State> a) -> bool { // function for possible states
 			return (dfa1.Q(a.first) && dfa2.Q(a.second));
 		},
@@ -306,7 +309,7 @@ int main()
 			[](int qi, Char c) { return 0; },
 			[](int qi) { return qi == 1; });
 
-	// DFA example that only accepts the empty string
+	// DFA example that only accepts any string with my name in it
 	auto mtAccept =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
@@ -352,44 +355,49 @@ int main()
 	auto nameDFA =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1 || qi == 2 || qi == 3 || qi == 4 || qi == 5; },
-			name,
+			name, // {s,c,o,t}
 			0,
 			[](int qi, Char c) {
-		if (qi == 0) {
+		switch (qi)
+		{
+		case 0:
 			if (c.c == 's') {
 				return 1;
 			}
 			else return 0;
-		}
-		else if (qi == 1) {
+			break;
+		case 1:
 			if (c.c == 'c') {
 				return 2;
 			}
 			else return 0;
-		}
-		else if (qi == 2) {
+			break;
+		case 2:
 			if (c.c == 'o') {
 				return 3;
 			}
 			else return 0;
-		}
-		else if (qi == 3) {
+			break;
+		case 3:
 			if (c.c == 't') {
 				return 4;
 			}
 			else return 0;
-		}
-		else if (qi == 4) {
+			break;
+		case 4:
 			if (c.c == 't') {
 				return 5;
 			}
 			else return 0;
-		}
-		else if (qi == 5) {
+			break;
+		case 5:
 			return 5;
-		}
-		else { return 0; }},
+			break;
+		default:
+			return 0;
+		}},
 			[](int qi) { return qi == 5; });
+
 
 	// DFA that only accepts the given character
 	auto onlyOne = new DFA<int>('A');
