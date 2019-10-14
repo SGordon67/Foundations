@@ -63,6 +63,7 @@ public:
 	}
 };
 
+// task 3 function
 String* nString(int in, vector<Char> myVector) {
 	// deal with the trivial cases
 	if (in == 1) {
@@ -172,12 +173,6 @@ public:
 		this->F = (	[=](int qi) { return qi == 1; });
 	}
 
-	// creates a DFA that is the intersection of dfa1 and dfa2
-	template <class State>
-	DFA<std::pair<State, State>> intersectionDFA(DFA<State> dfa1, DFA<State> dfa2)
-	{
-	}
-
 	// returns true/false to indicate 
 	// the calling DFA is a subuset of dfa2
 	bool subsetDFA(DFA<State> dfa2)
@@ -277,15 +272,38 @@ DFA<pair<State, State>>* unionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
 	*/
 	return new DFA<pair<State, State>>(
 		[=](pair<State, State> a) -> bool { // function for possible states
-		return (dfa1->Q(a.first) && dfa2->Q(a.second));
+		return (dfa1->Q(a.first) && dfa2->Q(a.second));// possible states
 	},
-		dfa1->v,
-		make_pair(dfa1->q0, dfa2->q0),
+		dfa1->v,// alphabet
+		make_pair(dfa1->q0, dfa2->q0),// start state
 		[=](pair<State, State> a, Char b) -> pair<State, State> {
 		return (make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
 	},
 		[=](pair<State, State> a) { // accept states
 		return ((dfa1->F(a.first)) || (dfa2->F(a.second)));
+	});
+}
+
+// creates a DFA that is the intersection of dfa1 and dfa2
+template <class State>
+DFA<std::pair<State, State>>* intersectionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
+{
+	/*
+	list<myChar> a = dfa1.alphabet;
+	list<myChar> b = dfa2.alphabet;
+	a.insert(a.end(), b.begin(), b.end()); // combine alphabets
+	*/
+	return new DFA<std::pair<State, State>>(
+		[=](std::pair<State, State> a) -> bool { 
+		return (dfa1->Q(a.first) && dfa2->Q(a.second));
+	},
+		dfa1->v,// alphabet
+		make_pair(dfa1->q0, dfa2->q0),
+		[=](pair<State, State> a, Char b) -> pair<State, State> {
+		return (make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
+	},
+		[=](std::pair<State, State> a) {                    // accept states
+		return ((dfa1->F(a.first)) && (dfa2->F(a.second))); // only difference from unionDFA function
 	});
 }
 
@@ -450,8 +468,11 @@ int main()
 	// DFA for odd length strings
 	auto oddL = complimentDFA(evenL);
 	
-	// DFA that should accept even number/even lengthed strings
+	// DFA that should accept even number OR even lengthed strings
 	auto unionTest = unionDFA(evenN, evenL);
+
+	// DFA that should accept strings that are even length AND even numbers
+	auto intersectionTest = intersectionDFA(evenN, evenL);
 
 	//************************End of DFA section********************//
 	//**************************************************************//
@@ -466,15 +487,15 @@ int main()
 	OneString* test7 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new epsilon())));
 	
 	cout << "\n\t\ttesting evenL:\n";
-	testDFA(evenL, test1, false);	// only one char, flase
-	testDFA(evenL, test2, true);	// zero characters, true
-	testDFA(evenL, test3, true);	// two characters, true
+	testDFA(evenL, test1, false);	// Only one char, flase
+	testDFA(evenL, test2, true);	// Zero characters, true
+	testDFA(evenL, test3, true);	// Two characters, true
 	cout << endl;
 
 	cout << "\t\ttesting with evenN:\n";
 	testDFA(evenN, test1, true);	// 0 is even
-	testDFA(evenN, test2, true);	// empty is considered even for this example
-	testDFA(evenN, test3, false);	// AA is not even ?
+	testDFA(evenN, test2, true);	// Empty is considered even for this example
+	testDFA(evenN, test3, false);	// Non number inputs are not even by my defintion
 	cout << endl;
 	
 	cout << "\t\ttesting with oddL:\n";
@@ -497,24 +518,24 @@ int main()
 
 	cout << "\t\ttesting with mtAccept:\n";
 	testDFA(mtAccept, test1, false);//
-	testDFA(mtAccept, test2, true);//
+	testDFA(mtAccept, test2, true);	//
 	testDFA(mtAccept, test3, false);//
 	cout << endl;
 
 	cout << "\t\ttesting with onlyOne:\n";
-	testDFA(onlyOne, test1, false);//
-	testDFA(onlyOne, test2, false);//
-	testDFA(onlyOne, test3, true);//
+	testDFA(onlyOne, test1, false);	//
+	testDFA(onlyOne, test2, false);	//
+	testDFA(onlyOne, test3, true);	//
 	cout << endl;
 
 	cout << "\t\ttesting with nameDFA:\n";
-	testDFA(nameDFA, test1, false);
-	testDFA(nameDFA, test2, false);
-	testDFA(nameDFA, test3, false);
-	testDFA(nameDFA, nameString, true);
+	testDFA(nameDFA, test1, false);		//
+	testDFA(nameDFA, test2, false);		//
+	testDFA(nameDFA, test3, false);		//
+	testDFA(nameDFA, nameString, true);	//
 	cout << endl;
 	
-	cout << "\t\ttesting with oddL:\n";
+	cout << "\t\ttesting with unionTest:\n";
 	testDFA(unionTest, test1, true);	//
 	testDFA(unionTest, test4, true);	//
 	testDFA(unionTest, test5, true);	//
@@ -522,25 +543,14 @@ int main()
 	testDFA(unionTest, test7, true);	//
 	cout << endl;
 
-	/*
-	cout << evenL->accepts(test1) << " should be " << false << endl;
-	cout << evenL->accepts(test2) << " should be " << true << endl;
-	cout << oddL.accepts(test1) << " should be " << true << endl;
-	cout << oddL.accepts(test2) << " should be " << false << endl;
+	cout << "\t\ttesting with intersectionTest:\n";
+	testDFA(intersectionTest, test1, false);	//
+	testDFA(intersectionTest, test4, true);		//
+	testDFA(intersectionTest, test5, false);	//
+	testDFA(intersectionTest, test6, false);	//
+	testDFA(intersectionTest, test7, false);	//
+	cout << endl;
 
-	cout << evenN->accepts(test1) << " should be " << true << endl;
-	cout << oddN.accepts(test1) << " should be " << false << endl;
-
-	cout << noAccept->accepts(test1) << " should be " << false << endl;
-	
-	cout << mtAccept->accepts(test1) << " should be " << false << endl;
-	cout << mtAccept->accepts(test2) << " should be " << true << endl;
-
-	cout << onlyOne->accepts(test3) << " should be " << true << endl;
-
-	cout << noAccept->acceptedString() << " should be " << false << endl;
-	cout << nameDFA->acceptedString() << " should be " << true << endl;
-	*/
-
-	onlyOne->trace(test3);
+	nameDFA->trace(nameString); // States 0-1-2-3-4 
+	//unionTest->trace(test7);	// trace the union of two DFA's
 }
