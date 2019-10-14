@@ -153,16 +153,23 @@ public:
 
 	// constructor for DFA that only takes given char
 	DFA(char tChar) {
-		this->Q = ([=](int qi) { return qi == 0 || qi == 1; });
+		this->Q = ([=](int qi) { return qi == 0 || qi == 1 || qi == 2; });
 		this->q0 = 0;
 		this->Delta = ([=](int qi, Char c) {
 			if (qi == 0) {
 				if (c.c == tChar) {
-					return 0;
+					return 1;
 				}
-				else return 1;
-			}});
-		this->F = (	[=](int qi) { return qi == 0; });
+				else return 2;
+			}
+			else if (qi == 1) {
+				if (c.c == tChar) {
+					return 1;
+				}
+				else return 2;
+			}
+			else return 2; });
+		this->F = (	[=](int qi) { return qi == 1; });
 	}
 
 	// creates a DFA that is the intersection of dfa1 and dfa2
@@ -219,7 +226,7 @@ public:
 	bool trace(String* inputString) {
 		State qi = this->q0;
 		String* temp = inputString;
-		cout << qi;
+		//cout << qi;			// first state
 		while (temp->fChar().c != 'E') {
 			cout << qi;
 			qi = Delta(qi, temp->fChar());
@@ -261,28 +268,28 @@ DFA<State>* complimentDFA(DFA<State>* inputDFA) {
 
 // function that returns the union of two given DFA's
 template <class State>
-DFA<pair<State, State>> unionDFA(DFA<State> dfa1, DFA<State> dfa2)
+DFA<pair<State, State>>* unionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
 {
 	/*
 	std::list<myChar> a = dfa1.alphabet;
 	std::list<myChar> b = dfa2.alphabet;
 	a.insert(a.end(), b.begin(), b.end()); // combines the alphabets
 	*/
-	return DFA<pair<State, State>>(
+	return new DFA<pair<State, State>>(
 		[=](pair<State, State> a) -> bool { // function for possible states
-		return (dfa1.Q(a.first) && dfa2.Q(a.second));
+		return (dfa1->Q(a.first) && dfa2->Q(a.second));
 	},
-		dfa1.v,
-		make_pair(dfa1.q0, dfa2.q0),
+		dfa1->v,
+		make_pair(dfa1->q0, dfa2->q0),
 		[=](pair<State, State> a, Char b) -> pair<State, State> {
-		return (make_pair(dfa1.Delta(a.first, b), dfa2.Delta(a.second, b)));
+		return (make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
 	},
 		[=](pair<State, State> a) { // accept states
-		return ((dfa1.F(a.first)) || (dfa2.F(a.second)));
+		return ((dfa1->F(a.first)) || (dfa2->F(a.second)));
 	});
 }
 
-// function for returning the compliment of a given DFA
+// function for testing the input of a DFA
 template <class State>
 void testDFA(DFA<State>* inputDFA, String* inputString, bool valid) {
 	
@@ -443,13 +450,21 @@ int main()
 	// DFA for odd length strings
 	auto oddL = complimentDFA(evenL);
 	
+	// DFA that should accept even number/even lengthed strings
+	auto unionTest = unionDFA(evenN, evenL);
+
 	//************************End of DFA section********************//
 	//**************************************************************//
 
 	OneString* test1 = new OneString(Char('0'), new epsilon());
 	epsilon* test2 = new epsilon();
 	OneString* test3 = new OneString(Char('A'), new OneString(Char('A'), new epsilon()));
-
+	OneString* nameString = new OneString(Char('s'), new OneString(Char('c'), new OneString(Char('o'), new OneString(Char('t'), new OneString(Char('t'), new epsilon())))));
+	OneString* test4 = new OneString(Char('1'), new OneString(Char('0'), new epsilon()));
+	OneString* test5 = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
+	OneString* test6 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('1'), new epsilon())));
+	OneString* test7 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new epsilon())));
+	
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// only one char, flase
 	testDFA(evenL, test2, true);	// zero characters, true
@@ -471,25 +486,41 @@ int main()
 	cout << "\t\ttesting with oddN:\n";
 	testDFA(oddN, test1, false);	//
 	testDFA(oddN, test2, false);	//
-	testDFA(oddN, test3, false);	//
-	cout << endl;
-	/*
+	testDFA(oddN, test3, true);		// Since oddN is defined as compliment of 
+	cout << endl;					// evenNum, any non number input is 'odd'
+	
+	cout << "\t\ttesting with noAccept:\n";
 	testDFA(noAccept, test1, false);//
 	testDFA(noAccept, test2, false);//
 	testDFA(noAccept, test3, false);//
+	cout << endl;
 
+	cout << "\t\ttesting with mtAccept:\n";
 	testDFA(mtAccept, test1, false);//
 	testDFA(mtAccept, test2, true);//
 	testDFA(mtAccept, test3, false);//
+	cout << endl;
 
+	cout << "\t\ttesting with onlyOne:\n";
 	testDFA(onlyOne, test1, false);//
 	testDFA(onlyOne, test2, false);//
 	testDFA(onlyOne, test3, true);//
+	cout << endl;
 
+	cout << "\t\ttesting with nameDFA:\n";
 	testDFA(nameDFA, test1, false);
 	testDFA(nameDFA, test2, false);
 	testDFA(nameDFA, test3, false);
-	*/
+	testDFA(nameDFA, nameString, true);
+	cout << endl;
+	
+	cout << "\t\ttesting with oddL:\n";
+	testDFA(unionTest, test1, true);	//
+	testDFA(unionTest, test4, true);	//
+	testDFA(unionTest, test5, true);	//
+	testDFA(unionTest, test6, false);	//
+	testDFA(unionTest, test7, true);	//
+	cout << endl;
 
 	/*
 	cout << evenL->accepts(test1) << " should be " << false << endl;
@@ -512,8 +543,4 @@ int main()
 	*/
 
 	onlyOne->trace(test3);
-
-	
-
-
 }
