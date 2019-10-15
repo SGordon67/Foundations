@@ -313,8 +313,11 @@ template <class State, class State2>
 bool subsetDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
 	DFA<pair<State, State2>>* dfa3 = intersectionDFA(dfa1, complementDFA(dfa2));
-	bool sub = dfa3->acceptedString();
-	return sub;
+	String* sub = dfa3->acceptedString();
+	if (sub->isEmpty()) {
+		return true;
+	} else return false;
+	//return sub;
 }
 
 // returns true/false to indicate 
@@ -607,7 +610,8 @@ int main()
 	cout << endl;
 
 	bool subTest = subsetDFA(zeroDFA, evenN);
-	cout << subTest;
+	bool subTest2 = subsetDFA(oddN, evenN);
+	cout << subTest << subTest2;
 
 	cout << endl;
 	String* boop = nameDFA->acceptedString();
