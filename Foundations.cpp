@@ -490,25 +490,42 @@ int main()
 	testDFA(evenL, test1, false);	// Only one char, flase
 	testDFA(evenL, test2, true);	// Zero characters, true
 	testDFA(evenL, test3, true);	// Two characters, true
+	testDFA(evenL, test4, true);	
+	testDFA(evenL, test5, true);	
+	testDFA(evenL, test6, false);
+	testDFA(evenL, test7, false);
 	cout << endl;
 
 	cout << "\t\ttesting with evenN:\n";
 	testDFA(evenN, test1, true);	// 0 is even
 	testDFA(evenN, test2, true);	// Empty is considered even for this example
 	testDFA(evenN, test3, false);	// Non number inputs are not even by my defintion
+	testDFA(evenN, test4, true);
+	testDFA(evenN, test5, false);
+	testDFA(evenN, test6, false);
+	testDFA(evenN, test7, true);
 	cout << endl;
 	
 	cout << "\t\ttesting with oddL:\n";
-	testDFA(oddL, test1, true);		//
-	testDFA(oddL, test2, false);	//
-	testDFA(oddL, test3, false);	//
+	testDFA(oddL, test1, true);
+	testDFA(oddL, test2, false);
+	testDFA(oddL, test3, false);
+	testDFA(oddL, test4, false);
+	testDFA(oddL, test5, false);
+	testDFA(oddL, test6, true);
+	testDFA(oddL, test7, true);
 	cout << endl;
 
 	cout << "\t\ttesting with oddN:\n";
 	testDFA(oddN, test1, false);	//
 	testDFA(oddN, test2, false);	//
-	testDFA(oddN, test3, true);		// Since oddN is defined as compliment of 
-	cout << endl;					// evenNum, any non number input is 'odd'
+	testDFA(oddN, test3, true);		// any non number input is 'odd'
+	testDFA(oddN, test4, false);
+	testDFA(oddN, test5, true);
+	testDFA(oddN, test6, true);
+	testDFA(oddN, test7, false);
+	cout << endl;
+
 	
 	cout << "\t\ttesting with noAccept:\n";
 	testDFA(noAccept, test1, false);//
