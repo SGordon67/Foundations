@@ -8,13 +8,14 @@
 #include <functional>
 #include <utility>
 #include <vector>
+#include <stack> 
 
 using namespace std;
 
 class Char {
 public:
 	char c;
-	Char() { this->c = 'n'; }
+	Char() { this->c = 'E'; }
 	Char(char x) {this->c = x;}
 };
 
@@ -22,7 +23,7 @@ class String {
 public:
 	String() {}
 	virtual bool isEmpty() { return true; }
-	virtual Char fChar() { return (Char('n')); }
+	virtual Char fChar() { return (Char('E')); }
 	virtual String* next() { return (&String()); }
 	virtual void print() {};
 };
@@ -42,7 +43,7 @@ public:
 	Char c;
 	String* s;
 	OneString() {
-		this->c = Char('n');
+		this->c = Char('E');
 		this->s = new epsilon();
 	}
 	OneString(Char c, String* s) {
@@ -174,18 +175,30 @@ public:
 	}
 
 	// find an accepted string within the DFA
-	auto acceptedString() {
+	String* acceptedString() {
+		vector<Char> charVec;
 		vector<State> visitedStates;
 		State qi = q0;
-		//if (F(qi)) return new epsilon();
-
-		return(this->pAccept(qi, visitedStates));
+		
+		OneString* ret1 = new OneString();
+		OneString* ret = ret1;
+		if (this->pAccept(qi, visitedStates, charVec)) {
+			while ( true ) {
+				ret->c = charVec.back();
+				charVec.pop_back();
+				if (charVec.empty())break;
+				OneString* temp = new OneString();
+				ret->s = temp;
+				ret = temp;
+			}
+			return ret1;
+		}
+		else return new epsilon();
 	}
-	auto pAccept(State qi, vector<State> &visitedStates) {
+	auto pAccept(State qi, vector<State> &visitedStates, vector<Char> &charVec) {
 		if (F(qi)) { 
 			return true; 
 		}
-
 		for (int i = 0; i < visitedStates.size(); i++) {
 			if (qi == visitedStates[i]) {
 				return false;
@@ -194,8 +207,9 @@ public:
 		visitedStates.push_back(qi);
 
 		for (int i = 0; i < v.size(); i++) {
-			if (pAccept(Delta(qi, v[i]), visitedStates)) {
-				cout << v[i].c;
+			if (pAccept(Delta(qi, v[i]), visitedStates, charVec)) {
+				charVec.push_back(v[i].c);
+				//cout << v[i].c;
 				return true;
 			}
 		}
@@ -207,7 +221,7 @@ public:
 	bool trace(String* inputString) {
 		State qi = this->q0;
 		String* temp = inputString;
-		//cout << qi;			// first state
+
 		while (temp->isEmpty() == false) {
 			cout << qi;
 			qi = Delta(qi, temp->fChar());
@@ -231,9 +245,9 @@ public:
 	}
 };
 
-// function for returning the compliment of a given DFA
+// function for returning the complement of a given DFA
 template <class State>
-DFA<State>* complimentDFA(DFA<State>* inputDFA) {
+DFA<State>* complementDFA(DFA<State>* inputDFA) {
 
 	return new DFA<State>(inputDFA->Q,
 		inputDFA->v,
@@ -271,8 +285,8 @@ DFA<pair<State, State>>* unionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
 }
 
 // creates a DFA that is the intersection of dfa1 and dfa2
-template <class State>
-DFA<std::pair<State, State>>* intersectionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
+template <class State, class State2>
+DFA<std::pair<State, State2>>* intersectionDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
 	/*
 	list<myChar> a = dfa1.alphabet;
@@ -295,10 +309,12 @@ DFA<std::pair<State, State>>* intersectionDFA(DFA<State>* dfa1, DFA<State>* dfa2
 
 // returns true/false to indicate 
 // the calling DFA is a subuset of dfa2
-template <class State>
-bool subsetDFA(DFA<State> dfa1, DFA<State> dfa2)
+template <class State, class State2>
+bool subsetDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
-	DFA<State> dfa3 = intersectionDFA(dfa1, complementDFA(dfa2));
+	DFA<pair<State, State2>>* dfa3 = intersectionDFA(dfa1, complementDFA(dfa2));
+	bool sub = dfa3->acceptedString();
+	return sub;
 }
 
 // returns true/false to indicate 
@@ -456,15 +472,30 @@ int main()
 		}},
 			[](int qi) { return qi == 5; });
 
+	// accepts any number of 0's meant to be a subset of evenN
+	auto zeroDFA =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			binary,
+			0,
+			[](int qi, Char c) {
+		if (qi == 0) {
+			if (c.c == '0') {
+				return 0;
+			}
+			else return 1;
+		} if (qi == 1) return 1; },
+			[](int qi) { return qi == 0; });
+
 
 	// DFA that only accepts the given character
 	auto onlyOne = new DFA<int>('A');
 
-	// DFA for odd numbers (compliment of even numbers)
-	auto oddN = complimentDFA(evenN);
+	// DFA for odd numbers (complement of even numbers)
+	auto oddN = complementDFA(evenN);
 
 	// DFA for odd length strings
-	auto oddL = complimentDFA(evenL);
+	auto oddL = complementDFA(evenL);
 	
 	// DFA that should accept even number OR even lengthed strings
 	auto unionTest = unionDFA(evenN, evenL);
@@ -482,7 +513,8 @@ int main()
 	OneString* test5 = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
 	OneString* test6 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('1'), new epsilon())));
 	OneString* test7 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new epsilon())));
-	
+	String* zeroDfaTest = nString(16, binary); // String of 4 zeros 
+
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
 	testDFA(evenL, test2, true);	// Zero characters, true
@@ -563,6 +595,23 @@ int main()
 	testDFA(intersectionTest, test5, false);
 	testDFA(intersectionTest, test6, false);
 	testDFA(intersectionTest, test7, false);	
+	cout << endl;
+
+	cout << "\t\ttesting with zeroDFA:\n";
+	testDFA(zeroDFA, test1, true);
+	testDFA(zeroDFA, test4, false);
+	testDFA(zeroDFA, test5, false);
+	testDFA(zeroDFA, test6, false);
+	testDFA(zeroDFA, test7, false);
+	testDFA(zeroDFA, zeroDfaTest, true);
+	cout << endl;
+
+	bool subTest = subsetDFA(zeroDFA, evenN);
+	cout << subTest;
+
+	cout << endl;
+	String* boop = nameDFA->acceptedString();
+	boop->print();
 	cout << endl;
 
 	nameDFA->trace(nameString); // States 0-1-2-3-4 
