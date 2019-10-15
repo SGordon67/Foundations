@@ -173,20 +173,6 @@ public:
 		this->F = (	[=](int qi) { return qi == 1; });
 	}
 
-	// returns true/false to indicate 
-	// the calling DFA is a subuset of dfa2
-	bool subsetDFA(DFA<State> dfa2)
-	{
-		DFA<State> dfa3 = intersectionDFA(this, complementDFA(dfa2));
-	}
-
-	// returns true/false to indicate 
-	// the calling DFA is a equal to dfa2
-	bool equalityDFA(DFA<State> dfa1, DFA<State> dfa2)
-	{
-		DFA<State> dfa3 = unionDFA(intersectionDFA(dfa1, complementDFA(dfa2)), intersectionDFA(complementDFA(dfa1), dfa2));
-	}
-
 	// find an accepted string within the DFA
 	auto acceptedString() {
 		vector<State> visitedStates;
@@ -222,7 +208,7 @@ public:
 		State qi = this->q0;
 		String* temp = inputString;
 		//cout << qi;			// first state
-		while (temp->fChar().c != 'E') {
+		while (temp->isEmpty() == false) {
 			cout << qi;
 			qi = Delta(qi, temp->fChar());
 			temp = temp->next();
@@ -237,7 +223,7 @@ public:
 		State qi = this->q0;
 		String* temp = inputString;
 
-		while (temp->fChar().c != 'E') {
+		while (temp->isEmpty() == false) {
 			qi = Delta(qi, temp->fChar());
 			temp = temp->next();
 		}
@@ -307,6 +293,22 @@ DFA<std::pair<State, State>>* intersectionDFA(DFA<State>* dfa1, DFA<State>* dfa2
 	});
 }
 
+// returns true/false to indicate 
+// the calling DFA is a subuset of dfa2
+template <class State>
+bool subsetDFA(DFA<State> dfa1, DFA<State> dfa2)
+{
+	DFA<State> dfa3 = intersectionDFA(dfa1, complementDFA(dfa2));
+}
+
+// returns true/false to indicate 
+// the calling DFA is a equal to dfa2
+template <class State>
+bool equalityDFA(DFA<State> dfa1, DFA<State> dfa2)
+{
+	DFA<State> dfa3 = unionDFA(intersectionDFA(dfa1, complementDFA(dfa2)), intersectionDFA(complementDFA(dfa1), dfa2));
+}
+
 // function for testing the input of a DFA
 template <class State>
 void testDFA(DFA<State>* inputDFA, String* inputString, bool valid) {
@@ -358,7 +360,6 @@ int main()
 
 
 	//***********Area to write down different DFA examples**********//
-	//**************************************************************//
 
 	// DFA example that accepts no strings
 	auto noAccept =
@@ -369,7 +370,7 @@ int main()
 			[](int qi, Char c) { return 0; },
 			[](int qi) { return qi == 1; });
 
-	// DFA example that only accepts any string with my name in it
+	// DFA example that only accepts the empty string
 	auto mtAccept =
 		new DFA<int>
 		([](int qi) { return qi == 0 || qi == 1; },
@@ -377,10 +378,7 @@ int main()
 			0,
 			[](int qi, Char c) {
 		if (qi == 0) {
-			if (c.c == 'E') {
-				return 0;
-			}
-			else return 1;
+			return 1;
 		}},
 			[](int qi) { return qi == 0; });
 
@@ -475,7 +473,6 @@ int main()
 	auto intersectionTest = intersectionDFA(evenN, evenL);
 
 	//************************End of DFA section********************//
-	//**************************************************************//
 
 	OneString* test1 = new OneString(Char('0'), new epsilon());
 	epsilon* test2 = new epsilon();
@@ -490,8 +487,8 @@ int main()
 	testDFA(evenL, test1, false);	// Only one char, flase
 	testDFA(evenL, test2, true);	// Zero characters, true
 	testDFA(evenL, test3, true);	// Two characters, true
-	testDFA(evenL, test4, true);	
-	testDFA(evenL, test5, true);	
+	testDFA(evenL, test4, true);
+	testDFA(evenL, test5, true);
 	testDFA(evenL, test6, false);
 	testDFA(evenL, test7, false);
 	cout << endl;
@@ -517,8 +514,8 @@ int main()
 	cout << endl;
 
 	cout << "\t\ttesting with oddN:\n";
-	testDFA(oddN, test1, false);	//
-	testDFA(oddN, test2, false);	//
+	testDFA(oddN, test1, false);
+	testDFA(oddN, test2, false);
 	testDFA(oddN, test3, true);		// any non number input is 'odd'
 	testDFA(oddN, test4, false);
 	testDFA(oddN, test5, true);
@@ -528,44 +525,44 @@ int main()
 
 	
 	cout << "\t\ttesting with noAccept:\n";
-	testDFA(noAccept, test1, false);//
-	testDFA(noAccept, test2, false);//
-	testDFA(noAccept, test3, false);//
+	testDFA(noAccept, test1, false);
+	testDFA(noAccept, test2, false);
+	testDFA(noAccept, test3, false);
 	cout << endl;
 
 	cout << "\t\ttesting with mtAccept:\n";
-	testDFA(mtAccept, test1, false);//
-	testDFA(mtAccept, test2, true);	//
-	testDFA(mtAccept, test3, false);//
+	testDFA(mtAccept, test1, false);
+	testDFA(mtAccept, test2, true);
+	testDFA(mtAccept, test3, false);
 	cout << endl;
 
 	cout << "\t\ttesting with onlyOne:\n";
-	testDFA(onlyOne, test1, false);	//
-	testDFA(onlyOne, test2, false);	//
-	testDFA(onlyOne, test3, true);	//
+	testDFA(onlyOne, test1, false);
+	testDFA(onlyOne, test2, false);
+	testDFA(onlyOne, test3, true);
 	cout << endl;
 
 	cout << "\t\ttesting with nameDFA:\n";
-	testDFA(nameDFA, test1, false);		//
-	testDFA(nameDFA, test2, false);		//
-	testDFA(nameDFA, test3, false);		//
-	testDFA(nameDFA, nameString, true);	//
+	testDFA(nameDFA, test1, false);
+	testDFA(nameDFA, test2, false);
+	testDFA(nameDFA, test3, false);
+	testDFA(nameDFA, nameString, true);
 	cout << endl;
 	
 	cout << "\t\ttesting with unionTest:\n";
-	testDFA(unionTest, test1, true);	//
-	testDFA(unionTest, test4, true);	//
-	testDFA(unionTest, test5, true);	//
-	testDFA(unionTest, test6, false);	//
-	testDFA(unionTest, test7, true);	//
+	testDFA(unionTest, test1, true);
+	testDFA(unionTest, test4, true);
+	testDFA(unionTest, test5, true);
+	testDFA(unionTest, test6, false);
+	testDFA(unionTest, test7, true);
 	cout << endl;
 
 	cout << "\t\ttesting with intersectionTest:\n";
-	testDFA(intersectionTest, test1, false);	//
-	testDFA(intersectionTest, test4, true);		//
-	testDFA(intersectionTest, test5, false);	//
-	testDFA(intersectionTest, test6, false);	//
-	testDFA(intersectionTest, test7, false);	//
+	testDFA(intersectionTest, test1, false);
+	testDFA(intersectionTest, test4, true);
+	testDFA(intersectionTest, test5, false);
+	testDFA(intersectionTest, test6, false);
+	testDFA(intersectionTest, test7, false);	
 	cout << endl;
 
 	nameDFA->trace(nameString); // States 0-1-2-3-4 
