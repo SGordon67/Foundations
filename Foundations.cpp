@@ -322,10 +322,15 @@ bool subsetDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 
 // returns true/false to indicate 
 // the calling DFA is a equal to dfa2
-template <class State>
-bool equalityDFA(DFA<State> dfa1, DFA<State> dfa2)
+template <class State, class State2>
+bool equalityDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
-	DFA<State> dfa3 = unionDFA(intersectionDFA(dfa1, complementDFA(dfa2)), intersectionDFA(complementDFA(dfa1), dfa2));
+	DFA<pair<pair<State, State2>, pair<State, State2>>>* dfa3 = unionDFA(intersectionDFA(dfa1, complementDFA(dfa2)), intersectionDFA(complementDFA(dfa1), dfa2));
+	String* sub = dfa3->acceptedString();
+	if (sub->isEmpty()) {
+		return true;
+	}
+	else return false;
 }
 
 // function for testing the input of a DFA
@@ -609,9 +614,15 @@ int main()
 	testDFA(zeroDFA, zeroDfaTest, true);
 	cout << endl;
 
+
+	// Tests for subset equality
 	bool subTest = subsetDFA(zeroDFA, evenN);
 	bool subTest2 = subsetDFA(oddN, evenN);
-	cout << subTest << subTest2;
+	cout << subTest << subTest2 << endl;
+
+	bool equalTest = equalityDFA(evenN, evenN);
+	bool equalTest2 = equalityDFA(evenN, evenL);
+	cout << equalTest << equalTest2 << endl;
 
 	cout << endl;
 	String* boop = nameDFA->acceptedString();
