@@ -631,4 +631,5 @@ int main()
 
 	nameDFA->trace(nameString); // States 0-1-2-3-4 
 	//unionTest->trace(test7);	// trace the union of two DFA's
+	// test for recording PC :)
 }
