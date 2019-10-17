@@ -373,7 +373,7 @@ int main()
 	testerb2->print();
 
 	int q = 21;
-	int r = 51;
+	int r = 58;
 	String* testerc = nString(q, char4);
 	String* testerc2 = nString(r, char4);
 	std::cout << "\n(4 char) nstring test with q = " << q << ": ";
@@ -539,6 +539,7 @@ int main()
 		} if (qi == 1) return 1; },
 			[](int qi) { return qi == 0; });
 
+	// DFA's created using special functions
 
 	// DFA that only accepts the given character
 	auto onlyOne = new DFA<int>('A');
@@ -669,7 +670,7 @@ int main()
 	testDFA(evenNDec, zeroDfaTest, true);
 	cout << endl;
 
-	// Trivial tests for subset equality
+	// Trivial tests for subset and equality
 	bool subTest = subsetDFA(zeroDFA, evenN);
 	bool subTest2 = subsetDFA(oddNC, evenN);
 	cout << subTest << subTest2 << endl;
