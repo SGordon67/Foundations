@@ -184,6 +184,7 @@ public:
 		OneString* ret = ret1;
 		if (this->pAccept(qi, visitedStates, charVec)) {
 			while ( true ) {
+				if (charVec.empty())break;
 				ret->c = charVec.back();
 				charVec.pop_back();
 				if (charVec.empty())break;
@@ -223,7 +224,7 @@ public:
 		String* temp = inputString;
 
 		while (temp->isEmpty() == false) {
-			cout << qi;
+			cout << qi; // need to generalize for pairs
 			qi = Delta(qi, temp->fChar());
 			temp = temp->next();
 			
@@ -382,9 +383,7 @@ int main()
 	std::cout << std::endl;
 	/* test area for task 3 end */
 
-
 	//***********Area to write down different DFA examples**********//
-
 	// DFA example that accepts no strings
 	auto noAccept =
 		new DFA<int>
@@ -417,6 +416,17 @@ int main()
 		else { return 0; }},
 			[](int qi) { return qi == 0; });
 
+	// DFA for odd length string
+	auto oddL =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			binary,
+			0,
+			[](int qi, Char c) {
+		if (qi == 0) { return 1; }
+		else { return 0; }},
+			[](int qi) { return qi == 1; });
+
 	// DFA for even number (binary)
 	auto evenN =
 		new DFA<int>
@@ -429,6 +439,40 @@ int main()
 			else return 1;
 		}
 		else if (c.c == '0') { return 0; }
+		else return 1;
+	},
+			[](int qi) { return qi == 0; });
+
+	// DFA for even Number (Decimal)
+	auto evenNDec =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			decimal,
+			0,
+			[](int qi, Char c) {
+		if (qi == 0) {
+			if (c.c == '0' || c.c == '2' || c.c == '4' || c.c == '6' || c.c == '8') { return 0; }
+			else return 1;
+		}
+		else if (qi == 1) {
+			if (c.c == '0' || c.c == '2' || c.c == '4' || c.c == '6' || c.c == '8') { return 0; }
+			else return 1;
+		}
+	},
+			[](int qi) { return qi == 0; });
+
+	// DFA for odd number (binary)
+	auto oddN =
+		new DFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			binary,
+			1,
+			[](int qi, Char c) {
+		if (qi == 0) {
+			if (c.c == '1') { return 0; }
+			else return 1;
+		}
+		else if (c.c == '1') { return 0; }
 		else return 1;
 	},
 			[](int qi) { return qi == 0; });
@@ -500,10 +544,10 @@ int main()
 	auto onlyOne = new DFA<int>('A');
 
 	// DFA for odd numbers (complement of even numbers)
-	auto oddN = complementDFA(evenN);
+	auto oddNC = complementDFA(evenN);
 
 	// DFA for odd length strings
-	auto oddL = complementDFA(evenL);
+	auto oddLC = complementDFA(evenL);
 	
 	// DFA that should accept even number OR even lengthed strings
 	auto unionTest = unionDFA(evenN, evenL);
@@ -522,6 +566,8 @@ int main()
 	OneString* test6 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('1'), new epsilon())));
 	OneString* test7 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new epsilon())));
 	String* zeroDfaTest = nString(16, binary); // String of 4 zeros 
+	OneString* test8 = new OneString(Char('3'), new OneString(Char('7'), new OneString(Char('0'), new epsilon())));
+	OneString* test9 = new OneString(Char('5'), new OneString(Char('2'), new OneString(Char('3'), new epsilon())));
 
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
@@ -544,23 +590,23 @@ int main()
 	cout << endl;
 	
 	cout << "\t\ttesting with oddL:\n";
-	testDFA(oddL, test1, true);
-	testDFA(oddL, test2, false);
-	testDFA(oddL, test3, false);
-	testDFA(oddL, test4, false);
-	testDFA(oddL, test5, false);
-	testDFA(oddL, test6, true);
-	testDFA(oddL, test7, true);
+	testDFA(oddLC, test1, true);
+	testDFA(oddLC, test2, false);
+	testDFA(oddLC, test3, false);
+	testDFA(oddLC, test4, false);
+	testDFA(oddLC, test5, false);
+	testDFA(oddLC, test6, true);
+	testDFA(oddLC, test7, true);
 	cout << endl;
 
 	cout << "\t\ttesting with oddN:\n";
-	testDFA(oddN, test1, false);
-	testDFA(oddN, test2, false);
-	testDFA(oddN, test3, true);		// any non number input is 'odd'
-	testDFA(oddN, test4, false);
-	testDFA(oddN, test5, true);
-	testDFA(oddN, test6, true);
-	testDFA(oddN, test7, false);
+	testDFA(oddNC, test1, false);
+	testDFA(oddNC, test2, false);
+	testDFA(oddNC, test3, true);	// any non number input is 'odd'
+	testDFA(oddNC, test4, false);
+	testDFA(oddNC, test5, true);
+	testDFA(oddNC, test6, true);
+	testDFA(oddNC, test7, false);
 	cout << endl;
 
 	
@@ -614,15 +660,28 @@ int main()
 	testDFA(zeroDFA, zeroDfaTest, true);
 	cout << endl;
 
+	cout << "\t\ttesting with evenNDec:\n";
+	testDFA(evenNDec, test1, true);
+	testDFA(evenNDec, test4, true);
+	testDFA(evenNDec, test5, false);
+	testDFA(evenNDec, test8, true);
+	testDFA(evenNDec, test9, false);
+	testDFA(evenNDec, zeroDfaTest, true);
+	cout << endl;
 
-	// Tests for subset equality
+	// Trivial tests for subset equality
 	bool subTest = subsetDFA(zeroDFA, evenN);
-	bool subTest2 = subsetDFA(oddN, evenN);
+	bool subTest2 = subsetDFA(oddNC, evenN);
 	cout << subTest << subTest2 << endl;
 
 	bool equalTest = equalityDFA(evenN, evenN);
 	bool equalTest2 = equalityDFA(evenN, evenL);
 	cout << equalTest << equalTest2 << endl;
+
+	// Better test for equality
+	bool betterEqual1 = equalityDFA(oddN, oddNC);
+	bool betterEqual2 = equalityDFA(oddL, oddLC);
+	cout << betterEqual1 << betterEqual2 << endl;
 
 	cout << endl;
 	String* boop = nameDFA->acceptedString();
@@ -630,5 +689,5 @@ int main()
 	cout << endl;
 
 	nameDFA->trace(nameString); // States 0-1-2-3-4 
-	//unionTest->trace(test7);	// trace the union of two DFA's
+	//unionTest->trace(test7);	// need to fix trace to work with union(pairs)
 }
