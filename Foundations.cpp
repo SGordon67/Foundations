@@ -66,6 +66,15 @@ public:
 
 // task 3 function
 String* nString(int in, vector<Char> myVector) {
+
+	/*
+	1. organize sigma* into 'columns' of the different length strings
+	2. find out which 'column your string belongs to
+	3. find out the index of your string in that column
+	4. calculate the string based on the alphabet and index in that column
+	5. construct and return the string
+	*/
+
 	// deal with the trivial cases
 	if (in == 1) {
 		return new epsilon();
