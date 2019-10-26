@@ -11,41 +11,35 @@
 
 using namespace std;
 
-template <class tpair, class tpair2>
+template <class State, class State2>
 class myPair {
 public:
-	tpair first;
-	tpair2 second;
+	State first;
+	State2 second;
 
-	myPair(){
-		first = tpair();
-		second = tpair2();
-	}
-	myPair(tpair first, tpair2 second) {
+	//myPair<State, State2>(State mp1, State2 mp2) : first(mp1), second(mp2) {}
+
+	myPair<State, State2>() {}
+	myPair<State, State2>(State first, State2 second) {
 		this->first = first;
 		this->second = second;
 	}
 
-	friend ostream& operator<<(ostream& os, const myPair& mp);
+	friend ostream& operator<<(ostream& os, const myPair<State, State2>& mp)
+	{
+		os << mp.first << mp.second << endl;
+		return os;
+	}
+
+	friend bool operator==(const myPair<State, State2>& lhs, const myPair<State, State2>& rhs)
+	{
+		return(lhs.first == rhs.first && lhs.second == rhs.second);
+	}
 };
 
-template<class tpair, class tpair2>
-myPair<tpair, tpair2> my_make_pair(tpair first, tpair2 second) {
-	return (myPair<tpair, tpair2>(first, second));
-}
-
-template<class tpair, class tpair2>
-ostream& operator<<(ostream& os, const myPair<tpair, tpair2>& mp)
-{
-	cout << mp.first;
-	cout << mp.second;
-	return os;
-}
-
-template<class tpair, class tpair2>
-bool operator==(const myPair<tpair, tpair2>& lhs, const myPair<tpair, tpair2>& rhs)
-{
-	return(lhs.first == rhs.first && lhs.second == rhs.second);
+template<class State, class State2>
+myPair<State, State2> my_make_pair(State first, State2 second) {
+	return (myPair<State, State2>(first, second));
 }
 
 class Char {
@@ -273,10 +267,9 @@ public:
 		while (temp->isEmpty() == false) {
 			
 			//cout << "should be a repeat here";
-			if (cout << qi) { // need to generalize for pairs
-				qi = Delta(qi, temp->fChar());
-				temp = temp->next();
-			} else cout << "we did it";
+			cout << qi;	// need to generalize for pairs
+			qi = Delta(qi, temp->fChar());
+			temp = temp->next();
 		}
 		return F(qi);
 	}
@@ -312,24 +305,19 @@ DFA<State>* complementDFA(DFA<State>* inputDFA) {
 }
 
 // function that returns the union of two given DFA's
-template <class State>
-DFA<myPair<State, State>>* unionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
+template <class State, class State2>
+DFA<myPair<State, State2>>* unionDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
-	/*
-	std::list<myChar> a = dfa1.alphabet;
-	std::list<myChar> b = dfa2.alphabet;
-	a.insert(a.end(), b.begin(), b.end()); // combines the alphabets
-	*/
-	return new DFA<myPair<State, State>>(
-		[=](myPair<State, State> a) -> bool { // function for possible states
+	return new DFA<myPair<State, State2>>(
+		[=](myPair<State, State2> a) -> bool { // function for possible states
 		return (dfa1->Q(a.first) && dfa2->Q(a.second));// possible states
 	},
 		dfa1->v,// alphabet
 		my_make_pair(dfa1->q0, dfa2->q0),// start state
-		[=](myPair<State, State> a, Char b) -> myPair<State, State> {
+		[=](myPair<State, State2> a, Char b) -> myPair<State, State2> {
 		return (my_make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
 	},
-		[=](myPair<State, State> a) { // accept states
+		[=](myPair<State, State2> a) { // accept states
 		return ((dfa1->F(a.first)) || (dfa2->F(a.second)));
 	});
 }
@@ -343,16 +331,16 @@ DFA<myPair<State, State2>>* intersectionDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 	list<myChar> b = dfa2.alphabet;
 	a.insert(a.end(), b.begin(), b.end()); // combine alphabets
 	*/
-	return new DFA<myPair<State, State>>(
-		[=](myPair<State, State> a) -> bool { 
+	return new DFA<myPair<State, State2>>(
+		[=](myPair<State, State2> a) -> bool { 
 		return (dfa1->Q(a.first) && dfa2->Q(a.second));
 	},
 		dfa1->v,// alphabet
 		my_make_pair(dfa1->q0, dfa2->q0),
-		[=](myPair<State, State> a, Char b) -> myPair<State, State> {
+		[=](myPair<State, State2> a, Char b) -> myPair<State, State2> {
 		return (my_make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
 	},
-		[=](myPair<State, State> a) {                    // accept states
+		[=](myPair<State, State2> a) {                    // accept states
 		return ((dfa1->F(a.first)) && (dfa2->F(a.second))); // only difference from unionDFA function
 	});
 }
@@ -769,7 +757,19 @@ int main()
 	cout << endl;
 
 	nameDFA->trace(nameString); // States 0-1-2-3-4
-	//unionTest->trace(test7);	// trace the union of two DFA's
-
+	cout << endl;
+	evenN->trace(test7);		// States 0-0-1
+	cout << endl;
+	evenL->trace(test7);		// States 0-1-0
+	cout << endl;
+	
+	/*trace of a union shows each trace
+	individually, but also vertically next to eachother
+	in this case:
+	00
+	01
+	10*/
+	
+	unionTest->trace(test7);	// trace the union of two DFA's
 
 }
