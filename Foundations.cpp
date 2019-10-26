@@ -11,13 +11,17 @@
 
 using namespace std;
 
-template <class tpair>
+template <class tpair, class tpair2>
 class myPair {
 public:
 	tpair first;
-	tpair second;
+	tpair2 second;
 
-	myPair(tpair first, tpair second) {
+	myPair(){
+		first = tpair();
+		second = tpair2();
+	}
+	myPair(tpair first, tpair2 second) {
 		this->first = first;
 		this->second = second;
 	}
@@ -25,11 +29,23 @@ public:
 	friend ostream& operator<<(ostream& os, const myPair& mp);
 };
 
-template<class tpair>
-ostream& operator<<(ostream& os, const myPair<tpair>& mp)
+template<class tpair, class tpair2>
+myPair<tpair, tpair2> my_make_pair(tpair first, tpair2 second) {
+	return (myPair<tpair, tpair2>(first, second));
+}
+
+template<class tpair, class tpair2>
+ostream& operator<<(ostream& os, const myPair<tpair, tpair2>& mp)
 {
-	cout << mp.first << mp.second;
+	cout << mp.first;
+	cout << mp.second;
 	return os;
+}
+
+template<class tpair, class tpair2>
+bool operator==(const myPair<tpair, tpair2>& lhs, const myPair<tpair, tpair2>& rhs)
+{
+	return(lhs.first == rhs.first && lhs.second == rhs.second);
 }
 
 class Char {
@@ -297,46 +313,46 @@ DFA<State>* complementDFA(DFA<State>* inputDFA) {
 
 // function that returns the union of two given DFA's
 template <class State>
-DFA<pair<State, State>>* unionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
+DFA<myPair<State, State>>* unionDFA(DFA<State>* dfa1, DFA<State>* dfa2)
 {
 	/*
 	std::list<myChar> a = dfa1.alphabet;
 	std::list<myChar> b = dfa2.alphabet;
 	a.insert(a.end(), b.begin(), b.end()); // combines the alphabets
 	*/
-	return new DFA<pair<State, State>>(
-		[=](pair<State, State> a) -> bool { // function for possible states
+	return new DFA<myPair<State, State>>(
+		[=](myPair<State, State> a) -> bool { // function for possible states
 		return (dfa1->Q(a.first) && dfa2->Q(a.second));// possible states
 	},
 		dfa1->v,// alphabet
-		make_pair(dfa1->q0, dfa2->q0),// start state
-		[=](pair<State, State> a, Char b) -> pair<State, State> {
-		return (make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
+		my_make_pair(dfa1->q0, dfa2->q0),// start state
+		[=](myPair<State, State> a, Char b) -> myPair<State, State> {
+		return (my_make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
 	},
-		[=](pair<State, State> a) { // accept states
+		[=](myPair<State, State> a) { // accept states
 		return ((dfa1->F(a.first)) || (dfa2->F(a.second)));
 	});
 }
 
 // creates a DFA that is the intersection of dfa1 and dfa2
 template <class State, class State2>
-DFA<std::pair<State, State2>>* intersectionDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
+DFA<myPair<State, State2>>* intersectionDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
 	/*
 	list<myChar> a = dfa1.alphabet;
 	list<myChar> b = dfa2.alphabet;
 	a.insert(a.end(), b.begin(), b.end()); // combine alphabets
 	*/
-	return new DFA<std::pair<State, State>>(
-		[=](std::pair<State, State> a) -> bool { 
+	return new DFA<myPair<State, State>>(
+		[=](myPair<State, State> a) -> bool { 
 		return (dfa1->Q(a.first) && dfa2->Q(a.second));
 	},
 		dfa1->v,// alphabet
-		make_pair(dfa1->q0, dfa2->q0),
-		[=](pair<State, State> a, Char b) -> pair<State, State> {
-		return (make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
+		my_make_pair(dfa1->q0, dfa2->q0),
+		[=](myPair<State, State> a, Char b) -> myPair<State, State> {
+		return (my_make_pair(dfa1->Delta(a.first, b), dfa2->Delta(a.second, b)));
 	},
-		[=](std::pair<State, State> a) {                    // accept states
+		[=](myPair<State, State> a) {                    // accept states
 		return ((dfa1->F(a.first)) && (dfa2->F(a.second))); // only difference from unionDFA function
 	});
 }
@@ -346,7 +362,7 @@ DFA<std::pair<State, State2>>* intersectionDFA(DFA<State>* dfa1, DFA<State2>* df
 template <class State, class State2>
 bool subsetDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
-	DFA<pair<State, State2>>* dfa3 = intersectionDFA(dfa1, complementDFA(dfa2));
+	DFA<myPair<State, State2>>* dfa3 = intersectionDFA(dfa1, complementDFA(dfa2));
 	String* sub = dfa3->acceptedString();
 	if (sub->isEmpty()) {
 		return true;
@@ -359,7 +375,7 @@ bool subsetDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 template <class State, class State2>
 bool equalityDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
-	DFA<pair<pair<State, State2>, pair<State, State2>>>* dfa3 = unionDFA(intersectionDFA(dfa1, complementDFA(dfa2)), intersectionDFA(complementDFA(dfa1), dfa2));
+	DFA<myPair<myPair<State, State2>, myPair<State, State2>>>* dfa3 = unionDFA(intersectionDFA(dfa1, complementDFA(dfa2)), intersectionDFA(complementDFA(dfa1), dfa2));
 	String* sub = dfa3->acceptedString();
 	if (sub->isEmpty()) {
 		return true;
@@ -752,6 +768,8 @@ int main()
 	boop->print();
 	cout << endl;
 
-	nameDFA->trace(nameString); // States 0-1-2-3-4 
+	nameDFA->trace(nameString); // States 0-1-2-3-4
 	//unionTest->trace(test7);	// trace the union of two DFA's
+
+
 }
