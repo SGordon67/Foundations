@@ -8,9 +8,29 @@
 #include <functional>
 #include <utility>
 #include <vector>
-#include <stack> 
 
 using namespace std;
+
+template <class tpair>
+class myPair {
+public:
+	tpair first;
+	tpair second;
+
+	myPair(tpair first, tpair second) {
+		this->first = first;
+		this->second = second;
+	}
+
+	friend ostream& operator<<(ostream& os, const myPair& mp);
+};
+
+template<class tpair>
+ostream& operator<<(ostream& os, const myPair<tpair>& mp)
+{
+	cout << mp.first << mp.second;
+	return os;
+}
 
 class Char {
 public:
@@ -139,6 +159,8 @@ String* nString(int in, vector<Char> myVector) {
 	return ret1;
 }
 
+//***************************DFA START***************************//
+
 // DFA Class
 template <class State>
 class DFA{
@@ -233,10 +255,12 @@ public:
 		String* temp = inputString;
 
 		while (temp->isEmpty() == false) {
-			cout << qi; // need to generalize for pairs
-			qi = Delta(qi, temp->fChar());
-			temp = temp->next();
 			
+			//cout << "should be a repeat here";
+			if (cout << qi) { // need to generalize for pairs
+				qi = Delta(qi, temp->fChar());
+				temp = temp->next();
+			} else cout << "we did it";
 		}
 		return F(qi);
 	}
@@ -352,6 +376,36 @@ void testDFA(DFA<State>* inputDFA, String* inputString, bool valid) {
 	cout << endl;
 	cout << "DFA gives: " << inputDFA->accepts(inputString) << "\tshould give: " << valid << endl;
 }
+
+//****************************DFA END****************************//
+
+//***************************NDFA START**************************//
+
+// DFA Class
+template <class templ>
+class NDFA {
+public:
+	function<bool(templ)> Q;			// States
+	vector<Char> v;						// Alphabet
+	templ q0;							// Start state
+	function<templ(templ, Char)> Delta;	// Delta function
+	function<bool(templ)> F;			// Accepting states
+
+	// standard constructor for a DFA
+	NDFA(function<bool(templ)> Q,
+		vector<Char> v,
+		templ q0,
+		function<templ(templ, Char)> Delta,
+		function<bool(templ)> F) {
+		this->Q = Q;
+		this->v = v;
+		this->q0 = q0;
+		this->Delta = Delta;
+		this->F = F;
+	}
+
+};
+//***************************NDFA END****************************//
 
 int main()
 {
@@ -700,6 +754,4 @@ int main()
 
 	nameDFA->trace(nameString); // States 0-1-2-3-4 
 	//unionTest->trace(test7);	// trace the union of two DFA's
-
-	// test for laptop
 }
