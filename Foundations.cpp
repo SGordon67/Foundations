@@ -383,11 +383,11 @@ void testDFA(DFA<State>* inputDFA, String* inputString, bool valid) {
 
 //****************************DFA END****************************//
 
-//***************************NDFA START**************************//
+//***************************NFA START**************************//
 
-// DFA Class
+// NFA Class
 template <class templ>
-class NDFA {
+class NFA {
 public:
 	function<bool(templ)> Q;			// States
 	vector<Char> v;						// Alphabet
@@ -409,7 +409,7 @@ public:
 	}
 
 };
-//***************************NDFA END****************************//
+//***************************NFA END****************************//
 
 int main()
 {
@@ -762,14 +762,12 @@ int main()
 	cout << endl;
 	evenL->trace(test7);		// States 0-1-0
 	cout << endl;
-	
 	/*trace of a union shows each trace
 	individually, but also vertically next to eachother
 	in this case:
 	00
 	01
 	10*/
-	
 	unionTest->trace(test7);	// trace the union of two DFA's
-
+	cout << endl;
 }
