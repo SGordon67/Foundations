@@ -65,7 +65,7 @@ public:
 	bool isEmpty() { return true; }
 	Char fChar() { return ep; }
 	String* next() { throw new _exception; }
-	void print() {  }
+	void print() {}
 };
 
 class OneString : public String{
@@ -326,11 +326,6 @@ DFA<myPair<State, State2>>* unionDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 template <class State, class State2>
 DFA<myPair<State, State2>>* intersectionDFA(DFA<State>* dfa1, DFA<State2>* dfa2)
 {
-	/*
-	list<myChar> a = dfa1.alphabet;
-	list<myChar> b = dfa2.alphabet;
-	a.insert(a.end(), b.begin(), b.end()); // combine alphabets
-	*/
 	return new DFA<myPair<State, State2>>(
 		[=](myPair<State, State2> a) -> bool { 
 		return (dfa1->Q(a.first) && dfa2->Q(a.second));
@@ -396,18 +391,17 @@ public:
 	function<bool(templ)> F;			// Accepting states
 
 	// standard constructor for a DFA
-	NDFA(function<bool(templ)> Q,
-		vector<Char> v,
-		templ q0,
-		function<templ(templ, Char)> Delta,
-		function<bool(templ)> F) {
+	NDFA(function<bool(templ)> Q,			// DFA
+		vector<Char> v,						// DFA
+		templ q0,							// DFA
+		function<list<templ>(templ, Char)> Delta,	// Q x epsilon -> P(Q)
+		function<bool(templ)> F) {			// DFA
 		this->Q = Q;
 		this->v = v;
 		this->q0 = q0;
 		this->Delta = Delta;
 		this->F = F;
 	}
-
 };
 //***************************NFA END****************************//
 
