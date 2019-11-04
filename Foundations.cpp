@@ -388,13 +388,15 @@ public:
 	vector<Char> v;						// Alphabet
 	templ q0;							// Start state
 	function<templ(templ, Char)> Delta;	// Delta function
+	function<vector<templ>(templ)> ETrans;// Epsilon transition function
 	function<bool(templ)> F;			// Accepting states
 
 	// standard constructor for a DFA
 	NDFA(function<bool(templ)> Q,			// DFA
 		vector<Char> v,						// DFA
 		templ q0,							// DFA
-		function<list<templ>(templ, Char)> Delta,	// Q x epsilon -> P(Q)
+		function<vector<templ>(templ, Char)> Delta,	// Q x epsilon -> P(Q)
+		function<vector<templ>(templ)> ETrans;// Epsilon transition function
 		function<bool(templ)> F) {			// DFA
 		this->Q = Q;
 		this->v = v;
