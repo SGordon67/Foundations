@@ -47,6 +47,18 @@ public:
 	char c;
 	Char() { this->c = 'E'; }
 	Char(char x) {this->c = x;}
+	bool isEmpty() { return false; }
+};
+
+class mtChar : public Char {
+public:
+	mtChar() {
+		this->c = NULL;
+	}
+	mtChar(char x) {
+		this->c = NULL;
+	}
+	bool isEmpty() { return true; }
 };
 
 class String {
@@ -395,8 +407,8 @@ public:
 	NFA(function<bool(templ)> Q,					// DFA
 		vector<Char> v,								// DFA
 		templ q0,									// DFA
-		function<vector<templ>(templ, Char)> Delta,	// Q x epsilon -> P(Q)
-		function<vector<templ>(templ)> ETrans,		// Epsilon transition function
+		function<vector<templ>(templ, Char&)> Delta,	// Q x epsilon -> P(Q)
+		//function<vector<templ>(templ)> ETrans,		// Epsilon transition function
 		function<bool(templ)> F) {					// DFA
 		this->Q = Q;
 		this->v = v;
@@ -410,19 +422,25 @@ public:
 		this->Q = in.Q;
 		this->v = in.v;
 		this->q0 = in.q0;
-		this->Delta = ;
-		this->ETrans = ;
+		this->Delta = ([=](int qi, Char c) {
+			vector<templ> cState;
+			cState[0] = in.Delta(qi, c);
+			return cState;
+			});
+		/*this->ETrans = ([=](int qi) {
+			vector<templ> vec{ in.q0 };
+			return vec;
+			});*/
 		this->F = in.F;
 	}
 };
 
-// DFA to NFA trivial function
 
 //***************************NFA END****************************//
 
 int main()
 {
-
+	mtChar test = mtChar();
 	vector<Char> binary{ Char('0'), Char('1') };
 	vector<Char> ternary{ Char('0'), Char('1'), Char('2') };
 	vector<Char> char4{ Char('0'), Char('1'), Char('2'), Char('3') };
