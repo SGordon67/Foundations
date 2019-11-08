@@ -392,19 +392,32 @@ public:
 	function<bool(templ)> F;			// Accepting states
 
 	// standard constructor for a DFA
-	NDFA(function<bool(templ)> Q,			// DFA
-		vector<Char> v,						// DFA
-		templ q0,							// DFA
+	NFA(function<bool(templ)> Q,					// DFA
+		vector<Char> v,								// DFA
+		templ q0,									// DFA
 		function<vector<templ>(templ, Char)> Delta,	// Q x epsilon -> P(Q)
-		function<vector<templ>(templ)> ETrans;// Epsilon transition function
-		function<bool(templ)> F) {			// DFA
+		function<vector<templ>(templ)> ETrans,		// Epsilon transition function
+		function<bool(templ)> F) {					// DFA
 		this->Q = Q;
 		this->v = v;
 		this->q0 = q0;
 		this->Delta = Delta;
 		this->F = F;
 	}
+
+	// DFA to NFA trivial function in the form of a cunstructor for NFA
+	NFA(DFA<templ> in) {
+		this->Q = in.Q;
+		this->v = in.v;
+		this->q0 = in.q0;
+		this->Delta = ;
+		this->ETrans = ;
+		this->F = in.F;
+	}
 };
+
+// DFA to NFA trivial function
+
 //***************************NFA END****************************//
 
 int main()
