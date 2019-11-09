@@ -399,8 +399,8 @@ public:
 	function<bool(templ)> Q;			// States
 	vector<Char> v;						// Alphabet
 	templ q0;							// Start state
-	function<templ(templ, Char)> Delta;	// Delta function
-	function<vector<templ>(templ)> ETrans;// Epsilon transition function
+	function<vector<templ>(templ, Char&)> Delta;	// Delta function
+	//function<vector<templ>(templ, Char&)> ETrans;// Epsilon transition function
 	function<bool(templ)> F;			// Accepting states
 
 	// standard constructor for a DFA
@@ -433,8 +433,58 @@ public:
 			});*/
 		this->F = in.F;
 	}
-};
 
+	// accepts function for NFA
+	bool accepts(OneString& inputString)
+	{
+		vector<templ> currentStates{ this->q0 }; // keep track of current states
+		vector<templ> tempVector;
+		vector<templ> newStates;
+		vector<templ> epsilonStates;
+		OneString* temp = &inputString;
+
+		Char* ctemp = new mtChar();
+		if (temp->isEmpty())
+		{
+			tempVector = this->Delta(q0, *ctemp);	// check for epsilon transitions from start state
+			currentStates.insert(currentStates.begin(), tempVector.begin(), tempVector.end());
+		}
+
+		// step through NFA with the input string
+		while (temp->isEmpty() != true)
+		{
+			newStates.clear(); // prepare to get new set of states from transFunc
+			epsilonStates.clear();
+
+			for (templ x : currentStates)
+			{
+				tempVector = this->Delta(x, *ctemp);//epsilonTrans(x); // check whether there are epsilon transitions for current state
+				epsilonStates.insert(epsilonStates.end(), tempVector.begin(), tempVector.end());
+			}
+			currentStates.insert(currentStates.end(), epsilonStates.begin(), epsilonStates.end());
+
+			for (templ x : currentStates)
+			{
+				tempVector = this->Delta(x, temp->c); // generate new sets of states from input char w/ each current state
+				newStates.insert(newStates.end(), tempVector.begin(), tempVector.end());
+			}
+
+			currentStates.clear();
+			currentStates = newStates;
+
+
+			
+			temp = (OneString *) temp->next(); // move to next character in the string
+		}
+
+		for (templ x : currentStates)
+		{
+			if (F(x))      // check whether any of the set of current states is an accept state
+				return true; // if in accept state, then that means this NFA accepts the input string
+		}
+		return false; // NFA does not accept the input string
+	}
+};
 
 //***************************NFA END****************************//
 
@@ -652,17 +702,72 @@ int main()
 
 	//************************End of DFA section********************//
 
+	//***************************NFA section************************//
+
+	// should accept any string of an even number of zeros
+	auto testNFA =
+		new NFA<int>
+		([](int qi) { return qi == 0 || qi == 1 || qi == 2 || qi == 3; },
+			binary,
+			1,
+			[](int qi, Char c) {
+				vector<int> vec0{ 0 };
+				vector<int> vec1{ 1 };
+				vector<int> vec2{ 2 };
+				vector<int> vec3{ 3 };
+				if (qi == 0) {
+					if (c.isEmpty() == true) {
+						return vec1;
+					}
+					else return vec3;
+				}
+				else if (qi == 1) {
+					if (c.isEmpty() == true) {
+						return vec3;
+					}
+					else if (c.c == '0') {
+						return vec2;
+					}
+					else return vec3;
+				}
+				else if (qi == 2) {
+					if (c.isEmpty() == true) {
+						return vec3;
+					}
+					else if (c.c == '0') {
+						return vec1;
+					}
+					else return vec3;
+				}
+				else return vec3;
+			},
+			[](int qi) { return qi == 1; });
+
+	//************************End of NFA section********************//
+	//	0
 	OneString* test1 = new OneString(Char('0'), new epsilon());
+	//	
 	epsilon* test2 = new epsilon();
+	//	AA
 	OneString* test3 = new OneString(Char('A'), new OneString(Char('A'), new epsilon()));
+	//	scott
 	OneString* nameString = new OneString(Char('s'), new OneString(Char('c'), new OneString(Char('o'), new OneString(Char('t'), new OneString(Char('t'), new epsilon())))));
+	//	10
 	OneString* test4 = new OneString(Char('1'), new OneString(Char('0'), new epsilon()));
+	//	01
 	OneString* test5 = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
+	//	011
 	OneString* test6 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('1'), new epsilon())));
+	//	010
 	OneString* test7 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new epsilon())));
+	//	0000
 	String* zeroDfaTest = nString(16, binary); // String of 4 zeros 
+	//	370
 	OneString* test8 = new OneString(Char('3'), new OneString(Char('7'), new OneString(Char('0'), new epsilon())));
+	//	523
 	OneString* test9 = new OneString(Char('5'), new OneString(Char('2'), new OneString(Char('3'), new epsilon())));
+	//	00
+	OneString* test01 = new OneString(Char('0'), new OneString(Char('0'), new epsilon()));
 
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
@@ -797,4 +902,10 @@ int main()
 	10*/
 	unionTest->trace(test7);	// trace the union of two DFA's
 	cout << endl;
+
+	// END OF DFA TESTING
+	cout << testNFA->accepts(*test01) << endl;
+	cout << testNFA->accepts(*test3) << endl;
+	cout << testNFA->accepts((OneString&) *zeroDfaTest) << endl;
+	
 }
