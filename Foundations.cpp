@@ -433,24 +433,54 @@ public:
 		this->F = in.F;
 	}
 
-	// Oracle function (task 27)
-	bool valid(OneString inputString, OneString traceString, bool res) {
+	// Oracle function (task 27) doesnt work yet
+	bool valid(OneString inputString, OneString traceString) {
+		OneString* in = &inputString;
+		OneString* tr = &traceString;
 
-		return true;
+		templ state = q0;
+		vector<templ> possibleStates;
+		vector<templ> tempVec;
+
+		if (tr->c.c != this->q0) { return false; }
+		tr = (OneString*) tr->next();
+
+		while (!tr->isEmpty() && !in->isEmpty()) {
+			tempVec = this->EDelta(state);
+			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
+			tempVec = this->Delta(state, in->c);
+			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
+
+			// if traceString.c isnt in possibleStates then return fasle
+			bool track = 0;
+			for (templ x : possibleStates) {
+				if (tr->c.c == x) { track = 1; }
+			}
+			if (track == 0) { return false; }
+			tempVec.clear();
+			possibleStates.clear();
+
+			in = (OneString*) in->next();
+			tr = (OneString*) tr->next();
+		}
+		// if all letters are used up from input and trace
+		// without already returning false, then its true
+		if (inputString.isEmpty() && traceString.isEmpty()) { return true; }
+		return false; 
 	}
 
-	// accepts function for NFA    **doesnt work properly yet
+	// accepts function for NFA 
 	bool accepts(OneString inputString)
 	{
-		vector<templ> currentStates{ this->q0 }; // keeps track of current states
+		vector<templ> currentStates{ this->q0 };
 		vector<templ> tempVector;
 		vector<templ> newStates;
 		vector<templ> epsilonStates;
 		OneString* temp = &inputString;
 
-		if (temp->isEmpty()) // inputString is the emptyString
+		if (temp->isEmpty()) 
 		{
-			tempVector = this->EDelta(this->q0); // check for epsilon transitions from start state
+			tempVector = this->EDelta(this->q0);
 			currentStates.insert(currentStates.begin(), tempVector.begin(), tempVector.end());
 		}
 
@@ -966,11 +996,17 @@ int main()
 	// not accepted
 	OneString* z32trace2 = new OneString(Char('0'), new OneString(Char('3'), new OneString(Char('4'), new OneString(Char('5'), new OneString(Char('3'), new OneString(Char('4'), new epsilon()))))));
 
+
 	// endInZeroNFA with string '0000'
 	// accepted
 	OneString* ztrace1 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new epsilon())))));
-	// not accepted
+	// not accepted or done yet
 	OneString* ztrace = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
+
+
+	// testing oracle function
+	cout << "testing values for oracle: ";
+	cout << endInZeroNFA->valid((OneString&)*zeroDfaTest, *ztrace1) << endl;
 
 	cout << zero32->accepts(*test01) << endl;
 	cout << zero32->accepts(*test3) << endl;
