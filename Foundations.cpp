@@ -51,6 +51,7 @@ public:
 };
 
 class mtChar : public Char {
+	char c;
 public:
 	mtChar() {
 		this->c = NULL;
@@ -390,6 +391,7 @@ void testDFA(DFA<State>* inputDFA, String* inputString, bool valid) {
 
 //****************************DFA END****************************//
 
+
 //***************************NFA START**************************//
 
 // NFA Class
@@ -399,16 +401,14 @@ public:
 	function<bool(templ)> Q;			// States
 	vector<Char> v;						// Alphabet
 	templ q0;							// Start state
-	function<vector<templ>(templ, Char&)> Delta;	// Delta function
-	//function<vector<templ>(templ, Char&)> ETrans;// Epsilon transition function
+	function<vector<templ>(templ, Char*)> Delta;	// Delta function
 	function<bool(templ)> F;			// Accepting states
 
 	// standard constructor for a DFA
 	NFA(function<bool(templ)> Q,					// DFA
 		vector<Char> v,								// DFA
 		templ q0,									// DFA
-		function<vector<templ>(templ, Char&)> Delta,	// Q x epsilon -> P(Q)
-		//function<vector<templ>(templ)> ETrans,		// Epsilon transition function
+		function<vector<templ>(templ, Char*)> Delta,	// Q x epsilon -> P(Q)
 		function<bool(templ)> F) {					// DFA
 		this->Q = Q;
 		this->v = v;
@@ -427,14 +427,11 @@ public:
 			cState[0] = in.Delta(qi, c);
 			return cState;
 			});
-		/*this->ETrans = ([=](int qi) {
-			vector<templ> vec{ in.q0 };
-			return vec;
-			});*/
 		this->F = in.F;
 	}
 
-	// accepts function for NFA
+
+	// accepts function for NFA    **doesnt work properly yet
 	bool accepts(OneString& inputString)
 	{
 		vector<templ> currentStates{ this->q0 }; // keep track of current states
@@ -446,13 +443,36 @@ public:
 		Char* ctemp = new mtChar();
 		if (temp->isEmpty())
 		{
-			tempVector = this->Delta(q0, *ctemp);	// check for epsilon transitions from start state
+			//tempVector = this->Delta(q0, ctemp);	// check for epsilon transitions from start state
+			for (int i = 0; i < tempVector.size(); i++) {
+				cout << tempVector[i];
+			}
 			currentStates.insert(currentStates.begin(), tempVector.begin(), tempVector.end());
 		}
 
+		//return true;
 		// step through NFA with the input string
 		while (temp->isEmpty() != true)
 		{
+			newStates.clear();
+			//currentStates.clear();
+
+			for (templ x : currentStates) {
+				//tempVector = this->Delta(x, ctemp);
+				currentStates.insert(currentStates.end(), tempVector.begin(), tempVector.end());
+			}
+			
+			Char user = Char('1');
+			for (templ x : currentStates) {
+				tempVector = this->Delta(x, &temp->fChar());
+				newStates.insert(newStates.end(), tempVector.begin(), tempVector.end());
+			}
+			
+			currentStates.clear();
+			currentStates = newStates;
+
+			temp = (OneString*)temp->next();
+			/*
 			newStates.clear(); // prepare to get new set of states from transFunc
 			epsilonStates.clear();
 
@@ -475,8 +495,9 @@ public:
 
 			
 			temp = (OneString *) temp->next(); // move to next character in the string
+			*/
 		}
-
+		
 		for (templ x : currentStates)
 		{
 			if (F(x))      // check whether any of the set of current states is an accept state
@@ -710,36 +731,66 @@ int main()
 		([](int qi) { return qi == 0 || qi == 1 || qi == 2 || qi == 3; },
 			binary,
 			1,
-			[](int qi, Char c) {
+			[](int qi, Char* c) {
 				vector<int> vec0{ 0 };
 				vector<int> vec1{ 1 };
 				vector<int> vec2{ 2 };
 				vector<int> vec3{ 3 };
 				if (qi == 0) {
-					if (c.isEmpty() == true) {
+					if (c->isEmpty() == true) {
 						return vec1;
 					}
 					else return vec3;
 				}
 				else if (qi == 1) {
-					if (c.isEmpty() == true) {
+					if (c->isEmpty() == true) {
 						return vec3;
 					}
-					else if (c.c == '0') {
+					else if (c->c == '0') {
 						return vec2;
 					}
 					else return vec3;
 				}
 				else if (qi == 2) {
-					if (c.isEmpty() == true) {
+					if (c->isEmpty() == true) {
 						return vec3;
 					}
-					else if (c.c == '0') {
+					else if (c->c == '0') {
 						return vec1;
 					}
 					else return vec3;
 				}
 				else return vec3;
+			},
+			[](int qi) { return qi == 1; });
+
+	// ends in a 0
+	auto endInZeroNFA =
+		new NFA<int>
+		([](int qi) { return qi == 0 || qi == 1; },
+			binary,
+			0,
+			[](int qi, Char* c) {
+				vector<int> vec1{ 1 };
+				vector<int> vec0{ 0 };
+				vector<int> vec01{0,1};
+				if (c->isEmpty()) { return vec0; }
+				if (qi == 0) {
+					if (c->c == '0') {
+						return vec01;
+					}
+					else if (c->c == 1) {
+						return vec0;
+					}
+				}
+				else if (qi == 1) {
+					if (c->c == '0') {
+						return vec01;
+					}
+					else if (c->c == 1) {
+						return vec0;
+					}
+				}
 			},
 			[](int qi) { return qi == 1; });
 
@@ -768,6 +819,9 @@ int main()
 	OneString* test9 = new OneString(Char('5'), new OneString(Char('2'), new OneString(Char('3'), new epsilon())));
 	//	00
 	OneString* test01 = new OneString(Char('0'), new OneString(Char('0'), new epsilon()));
+	//	11
+	OneString* test02 = new OneString(Char('1'), new OneString(Char('1'), new epsilon()));
+
 
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
@@ -904,8 +958,13 @@ int main()
 	cout << endl;
 
 	// END OF DFA TESTING
-	cout << testNFA->accepts(*test01) << endl;
-	cout << testNFA->accepts(*test3) << endl;
-	cout << testNFA->accepts((OneString&) *zeroDfaTest) << endl;
+	// NFA TESTING
+	//cout << testNFA->accepts(*test01) << endl;
+	//cout << testNFA->accepts(*test3) << endl;
+	//cout << testNFA->accepts((OneString&)*zeroDfaTest) << endl << endl;
+
+	cout << endInZeroNFA->accepts(*test01) << endl;
+	//cout << endInZeroNFA->accepts(*test02) << endl;
+	cout << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl;
 	
 }
