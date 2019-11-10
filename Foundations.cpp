@@ -433,6 +433,11 @@ public:
 		this->F = in.F;
 	}
 
+	// Oracle function (task 27)
+	bool valid(OneString inputString, OneString traceString, bool res) {
+
+		return true;
+	}
 
 	// accepts function for NFA    **doesnt work properly yet
 	bool accepts(OneString inputString)
@@ -950,10 +955,11 @@ int main()
 
 	// END OF DFA TESTING
 
+
+
 	// NFA TESTING
 	
 	// traces of nfa behavior
-
 	// zero32 with string '0000'
 	// accepted
 	OneString* z32trace1 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new epsilon()))))));
