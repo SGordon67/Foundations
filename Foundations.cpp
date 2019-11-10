@@ -949,14 +949,30 @@ int main()
 	cout << endl;
 
 	// END OF DFA TESTING
+
 	// NFA TESTING
+	
+	// traces of nfa behavior
+
+	// zero32 with string '0000'
+	// accepted
+	OneString* z32trace1 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new epsilon()))))));
+	// not accepted
+	OneString* z32trace2 = new OneString(Char('0'), new OneString(Char('3'), new OneString(Char('4'), new OneString(Char('5'), new OneString(Char('3'), new OneString(Char('4'), new epsilon()))))));
+
+	// endInZeroNFA with string '0000'
+	// accepted
+	OneString* ztrace1 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new epsilon())))));
+	// not accepted
+	OneString* ztrace = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
+
 	cout << zero32->accepts(*test01) << endl;
 	cout << zero32->accepts(*test3) << endl;
 	cout << zero32->accepts(*test02) << endl;
 	cout << zero32->accepts((OneString&)*zeroDfaTest) << endl << endl;
 
 	cout << endInZeroNFA->accepts(*test01) << endl;
-	cout << endInZeroNFA->accepts(*test02) << endl;// problem case '11' ?
+	cout << endInZeroNFA->accepts(*test02) << endl;
 	cout << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl;
 	
 }
