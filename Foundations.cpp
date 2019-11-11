@@ -273,17 +273,19 @@ public:
 
 	// function to trace the tree given a string
 	// accepts function but with output on every step
-	bool trace(String* inputString) {
+	bool trace(OneString inputString) {
 		State qi = this->q0;
-		String* temp = inputString;
+		OneString* temp = &inputString;
 
+		cout << qi;
 		while (temp->isEmpty() == false) {
-			
-			//cout << "should be a repeat here";
-			cout << qi;	// need to generalize for pairs
 			qi = Delta(qi, temp->fChar());
-			temp = temp->next();
+			temp = (OneString*) temp->next();
+			cout << qi;
 		}
+		qi = Delta(qi, temp->fChar());
+		//cout << qi;
+
 		return F(qi);
 	}
 
@@ -443,7 +445,6 @@ public:
 		vector<templ> tempVec;
 
 		while (!tr->isEmpty() && !in->isEmpty()) {
-			cout << "looping" << endl;
 			tempVec = this->EDelta(state);
 			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
 			tempVec = this->Delta(state, in->c);
@@ -454,11 +455,11 @@ public:
 
 			int track = 0;
 			for (templ x : possibleStates) {
+				/* testing output
 				cout << "x: " << x << endl;
 				cout << "state: " << state << endl;
-				cout << "(x == state): " << (x == state) << endl;
+				cout << "(x == state): " << (x == state) << endl; */
 				if (state == x) { track++; }
-				cout << "track: " << track << endl;
 			}
 			if (track < 1) { return false; }
 			tempVec.clear();
@@ -468,7 +469,6 @@ public:
 			tr = (OneString*) tr->next();
 		}
 		tr = (OneString*)tr->next();
-		cout << "made it here finally" << endl;
 		if (in->isEmpty() && tr->isEmpty()) { return true; }
 		return false; 
 	}
@@ -617,8 +617,10 @@ int main()
 			if (c.c == '0') { return 0; }
 			else return 1;
 		}
-		else if (c.c == '0') { return 0; }
-		else return 1;
+		else if (qi == 1) {
+			if (c.c == '0') { return 0; }
+			else return 1;
+		}
 	},
 			[](int qi) { return qi == 0; });
 
@@ -953,38 +955,54 @@ int main()
 	testDFA(evenNDec, zeroDfaTest, true);
 	cout << endl;
 
+	cout << "Testing DFA functions" << endl << endl;
 	// Trivial tests for subset and equality
 	bool subTest = subsetDFA(zeroDFA, evenN);
 	bool subTest2 = subsetDFA(oddNC, evenN);
-	cout << subTest << subTest2 << endl;
+	cout << "zeroDFA subset of evenN: " << subTest << endl;
+	cout << "oddNC subset of evenN: " << subTest2 << endl << endl;
 
 	bool equalTest = equalityDFA(evenN, evenN);
 	bool equalTest2 = equalityDFA(evenN, evenL);
-	cout << equalTest << equalTest2 << endl;
+	cout << "evenN equal to even: " << equalTest << endl;
+	cout << "evenN equal to evenL: " << equalTest2 << endl << endl;
 
 	// Better test for equality
 	bool betterEqual1 = equalityDFA(oddN, oddNC);
 	bool betterEqual2 = equalityDFA(oddL, oddLC);
-	cout << betterEqual1 << betterEqual2 << endl;
+	cout << "oddN equal to oddNC: " << betterEqual1 << endl;
+	cout << "oddL equal to oddLC: " << betterEqual2 << endl << endl;
 
-	cout << endl;
+	cout << "accepted string for the name DFA: ";
 	String* boop = nameDFA->acceptedString();
 	boop->print();
 	cout << endl;
 
-	nameDFA->trace(nameString); // States 0-1-2-3-4
+	cout << "a trace of '";
+	nameString->print();
+	cout << "' on nameDFA: ";
+	nameDFA->trace(*nameString); // States 0-1-2-3-4
 	cout << endl;
-	evenN->trace(test7);		// States 0-0-1
+
+	cout << "a trace of '";
+	test7->print();
+	cout << "' on eveN: ";
+	evenN->trace(*test7);		// States 0-0-1
 	cout << endl;
-	evenL->trace(test7);		// States 0-1-0
+
+	cout << "a trace of '";
+	test7->print();
+	cout << "' on evenL: ";
+	evenL->trace(*test7);		// States 0-1-0
 	cout << endl;
+
 	/*trace of a union shows each trace
 	individually, but also vertically next to eachother
 	in this case:
 	00
 	01
 	10*/
-	unionTest->trace(test7);	// trace the union of two DFA's
+	unionTest->trace(*test7);	// trace the union of two DFA's
 	cout << endl;
 
 	// END OF DFA TESTING
@@ -1009,12 +1027,19 @@ int main()
 
 
 	// testing oracle function
-	cout << "testing values for oracle: ";
+	cout << "testing values for oracle:" << endl;
+	cout << "inputString: ";
+	zeroDfaTest->print();
+	cout << endl << "traceString: ";
+	z32trace1->print();
+	cout << endl;
 	bool val = zero32->valid((OneString&)*zeroDfaTest, *z32trace1);
-	cout << val << " <-Result" << endl;
+	cout << "Result: " << val << endl << endl;
 
 
-	/*
+
+
+	
 	cout << zero32->accepts(*test01) << endl;
 	cout << zero32->accepts(*test3) << endl;
 	cout << zero32->accepts(*test02) << endl;
@@ -1023,5 +1048,4 @@ int main()
 	cout << endInZeroNFA->accepts(*test01) << endl;
 	cout << endInZeroNFA->accepts(*test02) << endl;
 	cout << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl;
-	*/
 }
