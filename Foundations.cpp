@@ -439,34 +439,39 @@ public:
 		OneString* tr = &traceString;
 
 		templ state = q0;
-		vector<templ> possibleStates;
+		vector<templ> possibleStates{ q0 };
 		vector<templ> tempVec;
 
-		if (tr->c.c != this->q0) { return false; }
-		tr = (OneString*) tr->next();
+		//if (tr->c.c != this->q0) { return false; }
+		//tr = (OneString*) tr->next();
 
 		while (!tr->isEmpty() && !in->isEmpty()) {
+			cout << "looping" << endl;
 			tempVec = this->EDelta(state);
 			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
 			tempVec = this->Delta(state, in->c);
 			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
 
 			// if traceString.c isnt in possibleStates then return fasle
-			bool track = 0;
+			int track = 0;
 			for (templ x : possibleStates) {
-				if (tr->c.c == x) { track = 1; }
+				cout << "x: " << x << endl;
+				cout << "tr->c.c: " << tr->c.c << endl;
+				cout << "(tr->c.c == x)" << (tr->c.c == x) << endl;
+				if (tr->c.c == x) { track++; } // '0' != '0' ?????????
 			}
-			if (track == 0) { return false; }
+			if (track < 1) { return false; }
 			tempVec.clear();
 			possibleStates.clear();
 
 			in = (OneString*) in->next();
 			tr = (OneString*) tr->next();
+			state = in->c.c;
+			track = 0;
 		}
-		// if all letters are used up from input and trace
-		// without already returning false, then its true
+
 		if (inputString.isEmpty() && traceString.isEmpty()) { return true; }
-		return false; 
+		//return false; 
 	}
 
 	// accepts function for NFA 
@@ -1006,8 +1011,10 @@ int main()
 
 	// testing oracle function
 	cout << "testing values for oracle: ";
-	cout << endInZeroNFA->valid((OneString&)*zeroDfaTest, *ztrace1) << endl;
+	cout << zero32->valid((OneString&)*zeroDfaTest, *z32trace1) << " <-Result" << endl;
 
+
+	/*
 	cout << zero32->accepts(*test01) << endl;
 	cout << zero32->accepts(*test3) << endl;
 	cout << zero32->accepts(*test02) << endl;
@@ -1016,5 +1023,5 @@ int main()
 	cout << endInZeroNFA->accepts(*test01) << endl;
 	cout << endInZeroNFA->accepts(*test02) << endl;
 	cout << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl;
-	
+	*/
 }
