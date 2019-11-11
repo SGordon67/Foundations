@@ -101,8 +101,48 @@ public:
 	String* next() { return this->s; }
 
 	void print() {
-		std::string a;
 		std::cout << this->c.c;
+		this->s->print();
+	}
+};
+
+class TraceEpsilon : public String {
+public:
+	Char ep = Char('E');
+	TraceEpsilon() {}
+	bool isEmpty() { return true; }
+	Char fChar() { return ep; }
+	String* next() { throw new _exception; }
+	void print() {}
+};
+
+class TraceString : public String {
+public:
+	Char c;
+	Char state;
+	String* s;
+	TraceString() {
+		this->c = Char('E');
+		this->s = new epsilon();
+	}
+	TraceString(Char c, Char state, String* s) {
+		this->c = c;
+		this->state = state;
+		this->s = s;
+	}
+
+	bool isEmpty() {
+		return false;
+	}
+	Char fChar() { return this->c; }
+	Char getState() { return this->state; }
+	String* next() { return this->s; }
+
+	void print() {
+		std::cout << this->c.c << this->state.c;
+		if (!this->next()->isEmpty()) {
+			cout << "->";
+		}
 		this->s->print();
 	}
 };
@@ -284,7 +324,6 @@ public:
 			cout << qi;
 		}
 		qi = Delta(qi, temp->fChar());
-		//cout << qi;
 
 		return F(qi);
 	}
@@ -436,41 +475,45 @@ public:
 	}
 
 	// Oracle function (task 27) doesnt work yet
-	bool valid(OneString inputString, OneString traceString) {
+	bool valid(OneString inputString, TraceString traceString) {
+
+
+
+		/*
 		OneString* in = &inputString;
 		OneString* tr = &traceString;
 
 		templ state = q0;
+		templ trState  = ((tr->c.c) - '0');
 		vector<templ> possibleStates{ q0 };
 		vector<templ> tempVec;
 
+		possibleStates.insert(possibleStates.end(), q0);
+		int track = 0;
 		while (!tr->isEmpty() && !in->isEmpty()) {
 			tempVec = this->EDelta(state);
 			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
 			tempVec = this->Delta(state, in->c);
 			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
-			state = ((tr->c.c) - '0'); // 'converting' the char value to an int
+			trState = ((tr->c.c) - '0'); // 'converting' the char value to an int
 
-			// if state isnt in possibleStates then return fasle
-
-			int track = 0;
+			track = 0;
 			for (templ x : possibleStates) {
-				/* testing output
-				cout << "x: " << x << endl;
-				cout << "state: " << state << endl;
-				cout << "(x == state): " << (x == state) << endl; */
-				if (state == x) { track++; }
+				if (trState == x) { track++; }
 			}
 			if (track < 1) { return false; }
 			tempVec.clear();
 			possibleStates.clear();
 
+			state = trState;
 			in = (OneString*) in->next();
 			tr = (OneString*) tr->next();
 		}
 		tr = (OneString*)tr->next();
 		if (in->isEmpty() && tr->isEmpty()) { return true; }
 		return false; 
+		*/
+		return true;
 	}
 
 	// accepts function for NFA 
@@ -994,7 +1037,7 @@ int main()
 	test7->print();
 	cout << "' on evenL: ";
 	evenL->trace(*test7);		// States 0-1-0
-	cout << endl;
+	cout << endl << endl;
 
 	/*trace of a union shows each trace
 	individually, but also vertically next to eachother
@@ -1002,6 +1045,9 @@ int main()
 	00
 	01
 	10*/
+	cout << "a trace of '";
+	test7->print();
+	cout << "' on the union of evenN and evenL: " << endl;
 	unionTest->trace(*test7);	// trace the union of two DFA's
 	cout << endl;
 
@@ -1014,7 +1060,8 @@ int main()
 	// traces of nfa behavior
 	// zero32 with string '0000'
 	// accepted
-	OneString* z32trace1 = new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new epsilon())))));
+	//OneString* z32trace1 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new epsilon()))))));
+	TraceString* z32trace1 = new TraceString(Char('0'), Char('0'), new TraceString(Char('0'), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'),  new TraceEpsilon()))))));
 	// not accepted
 	OneString* z32trace2 = new OneString(Char('0'), new OneString(Char('3'), new OneString(Char('4'), new OneString(Char('5'), new OneString(Char('3'), new OneString(Char('4'), new epsilon()))))));
 
@@ -1033,19 +1080,50 @@ int main()
 	cout << endl << "traceString: ";
 	z32trace1->print();
 	cout << endl;
-	bool val = zero32->valid((OneString&)*zeroDfaTest, *z32trace1);
-	cout << "Result: " << val << endl << endl;
+	//bool val = zero32->valid((OneString&)*zeroDfaTest, *z32trace1);
+	//cout << "Result on zero32: " << val << endl << endl;
 
+	cout << "inputString: ";
+	zeroDfaTest->print();
+	cout << endl << "traceString: ";
+	z32trace2->print();
+	cout << endl;
+	//bool val2 = zero32->valid((OneString&)*zeroDfaTest, *z32trace2);
+	//cout << "Result on zero32: " << val2 << endl << endl;
 
+	cout << "testing the accepts function for NFA's:" << endl;
+	cout << "input of '";
+	test01->print();
+	cout << "' on zero32" << endl;
+	cout << "result: " << zero32->accepts(*test01) << endl << endl;
 
+	cout << "input of '";
+	test3->print();
+	cout << "' on zero32" << endl;
+	cout << "result: " << zero32->accepts(*test3) << endl << endl;
 
-	
-	cout << zero32->accepts(*test01) << endl;
-	cout << zero32->accepts(*test3) << endl;
-	cout << zero32->accepts(*test02) << endl;
-	cout << zero32->accepts((OneString&)*zeroDfaTest) << endl << endl;
+	cout << "input of '";
+	test02->print();
+	cout << "' on zero32" << endl;
+	cout << "result: " << zero32->accepts(*test02) << endl << endl;
 
-	cout << endInZeroNFA->accepts(*test01) << endl;
-	cout << endInZeroNFA->accepts(*test02) << endl;
-	cout << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl;
+	cout << "input of '";
+	zeroDfaTest->print();
+	cout << "' on zero32" << endl;
+	cout << "result: " << zero32->accepts((OneString&)*zeroDfaTest) << endl << endl;
+
+	cout << "input of '";
+	test01->print();
+	cout << "' on endInZeroNFA" << endl;
+	cout << "result: " << endInZeroNFA->accepts(*test01) << endl << endl;
+
+	cout << "input of '";
+	test02->print();
+	cout << "' on endInZeroNFA" << endl;
+	cout << "result: " << endInZeroNFA->accepts(*test02) << endl << endl;
+
+	cout << "input of '";
+	zeroDfaTest->print();
+	cout << "' on endInZeroNFA" << endl;
+	cout << "result: " << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl << endl;
 }
