@@ -442,23 +442,23 @@ public:
 		vector<templ> possibleStates{ q0 };
 		vector<templ> tempVec;
 
-		//if (tr->c.c != this->q0) { return false; }
-		//tr = (OneString*) tr->next();
-
 		while (!tr->isEmpty() && !in->isEmpty()) {
 			cout << "looping" << endl;
 			tempVec = this->EDelta(state);
 			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
 			tempVec = this->Delta(state, in->c);
 			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
+			state = ((tr->c.c) - '0'); // 'converting' the char value to an int
 
-			// if traceString.c isnt in possibleStates then return fasle
+			// if state isnt in possibleStates then return fasle
+
 			int track = 0;
 			for (templ x : possibleStates) {
 				cout << "x: " << x << endl;
-				cout << "tr->c.c: " << tr->c.c << endl;
-				cout << "(tr->c.c == x)" << (tr->c.c == x) << endl;
-				if (tr->c.c == x) { track++; } // '0' != '0' ?????????
+				cout << "state: " << state << endl;
+				cout << "(x == state): " << (x == state) << endl;
+				if (state == x) { track++; }
+				cout << "track: " << track << endl;
 			}
 			if (track < 1) { return false; }
 			tempVec.clear();
@@ -466,12 +466,11 @@ public:
 
 			in = (OneString*) in->next();
 			tr = (OneString*) tr->next();
-			state = in->c.c;
-			track = 0;
 		}
-
-		if (inputString.isEmpty() && traceString.isEmpty()) { return true; }
-		//return false; 
+		tr = (OneString*)tr->next();
+		cout << "made it here finally" << endl;
+		if (in->isEmpty() && tr->isEmpty()) { return true; }
+		return false; 
 	}
 
 	// accepts function for NFA 
@@ -997,7 +996,7 @@ int main()
 	// traces of nfa behavior
 	// zero32 with string '0000'
 	// accepted
-	OneString* z32trace1 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new epsilon()))))));
+	OneString* z32trace1 = new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new epsilon())))));
 	// not accepted
 	OneString* z32trace2 = new OneString(Char('0'), new OneString(Char('3'), new OneString(Char('4'), new OneString(Char('5'), new OneString(Char('3'), new OneString(Char('4'), new epsilon()))))));
 
@@ -1011,7 +1010,8 @@ int main()
 
 	// testing oracle function
 	cout << "testing values for oracle: ";
-	cout << zero32->valid((OneString&)*zeroDfaTest, *z32trace1) << " <-Result" << endl;
+	bool val = zero32->valid((OneString&)*zeroDfaTest, *z32trace1);
+	cout << val << " <-Result" << endl;
 
 
 	/*
