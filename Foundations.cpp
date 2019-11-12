@@ -479,12 +479,12 @@ public:
 
 		OneString* in = &inputString;
 		TraceString* tr = &traceString;
-		vector<templ> tempVec;	
+		vector<templ> tempVec;
 		templ state = this->q0;
 		int track = 0;
 
 		// get rid of start state
-		if (((tr->state.c) - '0') != this->q0) {
+		if ((tr->state.c) != this->q0) {
 			return false;
 		}
 		tr = (TraceString*) tr->next();
@@ -492,17 +492,30 @@ public:
 		while (!tr->isEmpty()) {
 			track = 0;
 
-			if (tr->state.c == '_') {
-				//tempVec = this->EDelta(state, tr->fChar().c);
+			if (tr->fChar().c == '_') {
+				tempVec = this->EDelta(state);
 				for (templ x : tempVec) {
-					if (((tr->state.c) - '0') == x) { track++; }
+					if ((tr->getState().c) == x) { track++; }
+				}
+				if (track < 1) { return true; }
+
+				state = tr->getState().c;
+				tr = (TraceString*)tr->next();
+			}
+			else if (tr->fChar().c == in->fChar().c) {
+				tempVec = this->Delta(state, tr->fChar().c);
+				for (templ x : tempVec) {
+					if ((tr->getState().c) == x) { track++; }
 				}
 				if (track < 1) { return false; }
-			}
-			else {
 
+				state = tr->getState().c;
+				tr = (TraceString*)tr->next();
+				in = (OneString*)in->next();
 			}
+			else return false;
 		}
+		return true;
 
 
 		/*
@@ -1089,7 +1102,8 @@ int main()
 	TraceString* z32trace1 = new TraceString(mtChar(), Char('0'), new TraceString(mtChar(), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'), new TraceEpsilon()))))));
 	// not accepted
 	TraceString* z32trace2 = new TraceString(mtChar(), Char('0'), new TraceString(mtChar(), Char('3'), new TraceString(Char('0'), Char('4'), new TraceString(Char('0'), Char('5'), new TraceString(Char('0'), Char('3'), new TraceString(Char('0'), Char('4'), new TraceEpsilon()))))));
-
+	// not a proper trace
+	TraceString* z32trace3 = new TraceString(mtChar(), Char('0'), new TraceString(mtChar(), Char('3'), new TraceString(Char('0'), Char('5'), new TraceString(Char('0'), Char('5'), new TraceString(Char('0'), Char('3'), new TraceString(Char('0'), Char('4'), new TraceEpsilon()))))));
 
 	// endInZeroNFA with string '0000'
 	// accepted
@@ -1117,6 +1131,16 @@ int main()
 	bool val2 = zero32->valid((OneString&)*zeroDfaTest, *z32trace2);
 	cout << "Result on zero32: " << val2 << endl << endl;
 	
+	// should be false
+	cout << "inputString: ";
+	zeroDfaTest->print();
+	cout << endl << "traceString: ";
+	z32trace3->print();
+	cout << endl;
+	bool val3 = zero32->valid((OneString&)*zeroDfaTest, *z32trace3);
+	cout << "Result on zero32: " << val3 << endl << endl;
+
+
 
 	cout << "testing the accepts function for NFA's:" << endl;
 	cout << "input of '";
