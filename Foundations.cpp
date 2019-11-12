@@ -45,7 +45,7 @@ myPair<State, State2> my_make_pair(State first, State2 second) {
 class Char {
 public:
 	char c;
-	Char() { this->c = 'E'; }
+	Char() { this->c = '_'; }
 	Char(char x) {this->c = x;}
 	bool isEmpty() { return false; }
 };
@@ -54,7 +54,7 @@ class mtChar : public Char {
 	char c;
 public:
 	mtChar() {
-		this->c = NULL;
+		this->c = '_';
 	}
 	mtChar(char x) {
 		this->c = NULL;
@@ -477,6 +477,32 @@ public:
 	// Oracle function (task 27) doesnt work yet
 	bool valid(OneString inputString, TraceString traceString) {
 
+		OneString* in = &inputString;
+		TraceString* tr = &traceString;
+		vector<templ> tempVec;	
+		templ state = this->q0;
+		int track = 0;
+
+		// get rid of start state
+		if (((tr->state.c) - '0') != this->q0) {
+			return false;
+		}
+		tr = (TraceString*) tr->next();
+
+		while (!tr->isEmpty()) {
+			track = 0;
+
+			if (tr->state.c == '_') {
+				//tempVec = this->EDelta(state, tr->fChar().c);
+				for (templ x : tempVec) {
+					if (((tr->state.c) - '0') == x) { track++; }
+				}
+				if (track < 1) { return false; }
+			}
+			else {
+
+			}
+		}
 
 
 		/*
@@ -786,74 +812,74 @@ int main()
 
 	// accepts a string of zeros with length divisable by 2 or 3
 	auto zero32 =
-		new NFA<int>
-		([](int qi) { return qi == 0 || qi == 1 || qi == 2 || qi == 3 || qi == 4 || qi == 5; },
+		new NFA<char>
+		([](char qi) { return qi == '0' || qi == '1' || qi == '2' || qi == '3' || qi == '4' || qi == '5'; },
 			binary,
-			0,
-			[](int qi, Char c) {
-				vector<int> vec{};
-				vector<int> vec0{ 0 };
-				vector<int> vec1{ 1 };
-				vector<int> vec2{ 2 };
-				vector<int> vec3{ 3 };
-				vector<int> vec4{ 4 };
-				vector<int> vec5{ 5 };
-				if (qi == 0) {
+			'0',
+			[](char qi, Char c) {
+				vector<char> vec{};
+				vector<char> vec0{ '0' };
+				vector<char> vec1{ '1' };
+				vector<char> vec2{ '2' };
+				vector<char> vec3{ '3' };
+				vector<char> vec4{ '4' };
+				vector<char> vec5{ '5' };
+				if (qi == '0') {
 					return vec;
 				}
-				else if (qi == 1) {
+				else if (qi == '1') {
 					if (c.c == '0') {
 						return vec2;
 					}
 					else return vec;
 				}
-				else if (qi == 2) {
+				else if (qi == '2') {
 					if (c.c == '0') {
 						return vec1;
 					}
 					else return vec;
 				}
-				else if (qi == 3) {
+				else if (qi == '3') {
 					if (c.c == '0') {
 						return vec4;
 					}
 					else return vec;
 				}
-				else if (qi == 4) {
+				else if (qi == '4') {
 					if (c.c == '0') {
 						return vec5;
 					}
 					else return vec;
 				}
-				else if (qi == 5) {
+				else if (qi == '5') {
 					if (c.c == '0') {
 						return vec3;
 					}
 					else return vec;
 				}
 			},
-			[](int qi) {
-				vector<int> vec{};
-				vector<int> vec13{ 1,3 };
-				if (qi == 0) {
+			[](char qi) {
+				vector<char> vec{};
+				vector<char> vec13{'1','3'};
+				if (qi == '0') {
 					return vec13;
 				}
 				else return vec;
 			},
-			[](int qi) { return qi == 1 || qi == 3; });
+			[](char qi) { return qi == '1' || qi == '3'; });
 
 	// ends in a 0
 	auto endInZeroNFA =
-		new NFA<int>
-		([](int qi) { return qi == 0 || qi == 1; },
+		new NFA<char>
+		([](int qi) { return qi == '0' || qi == '1'; },
 			binary,
-			0,
-			[](int qi, Char c) {
-				vector<int> vec{};
-				vector<int> vec1{ 1 };
-				vector<int> vec0{ 0 };
-				vector<int> vec01{0,1};
-				if (qi == 0) {
+			'0',
+			[](char qi, Char c) {
+				vector<char> vec{};
+				vector<char> vec1{ '1' };
+				vector<char> vec0{ '0' };
+				vector<char> vec01{'0','1'};
+				if (qi == '0') {
 					if (c.c == '0') {
 						return vec01;
 					}
@@ -863,11 +889,11 @@ int main()
 				}
 				else return vec;
 			},
-			[](int qi) {
-				vector<int> vec{};
+			[](char qi) {
+				vector<char> vec{};
 				return vec;
 			},
-			[](int qi) { return qi == 1; });
+			[](char qi) { return qi == '1'; });
 
 	//************************End of NFA section********************//
 	//	0
@@ -1007,7 +1033,7 @@ int main()
 
 	bool equalTest = equalityDFA(evenN, evenN);
 	bool equalTest2 = equalityDFA(evenN, evenL);
-	cout << "evenN equal to even: " << equalTest << endl;
+	cout << "evenN equal to evenN: " << equalTest << endl;
 	cout << "evenN equal to evenL: " << equalTest2 << endl << endl;
 
 	// Better test for equality
@@ -1060,10 +1086,9 @@ int main()
 	// traces of nfa behavior
 	// zero32 with string '0000'
 	// accepted
-	//OneString* z32trace1 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new OneString(Char('2'), new OneString(Char('1'), new epsilon()))))));
-	TraceString* z32trace1 = new TraceString(Char('0'), Char('0'), new TraceString(Char('0'), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'),  new TraceEpsilon()))))));
+	TraceString* z32trace1 = new TraceString(mtChar(), Char('0'), new TraceString(mtChar(), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'), new TraceString(Char('0'), Char('2'), new TraceString(Char('0'), Char('1'), new TraceEpsilon()))))));
 	// not accepted
-	OneString* z32trace2 = new OneString(Char('0'), new OneString(Char('3'), new OneString(Char('4'), new OneString(Char('5'), new OneString(Char('3'), new OneString(Char('4'), new epsilon()))))));
+	TraceString* z32trace2 = new TraceString(mtChar(), Char('0'), new TraceString(mtChar(), Char('3'), new TraceString(Char('0'), Char('4'), new TraceString(Char('0'), Char('5'), new TraceString(Char('0'), Char('3'), new TraceString(Char('0'), Char('4'), new TraceEpsilon()))))));
 
 
 	// endInZeroNFA with string '0000'
@@ -1080,16 +1105,18 @@ int main()
 	cout << endl << "traceString: ";
 	z32trace1->print();
 	cout << endl;
-	//bool val = zero32->valid((OneString&)*zeroDfaTest, *z32trace1);
-	//cout << "Result on zero32: " << val << endl << endl;
+	bool val = zero32->valid((OneString&)*zeroDfaTest, *z32trace1);
+	cout << "Result on zero32: " << val << endl << endl;
 
+	
 	cout << "inputString: ";
 	zeroDfaTest->print();
 	cout << endl << "traceString: ";
 	z32trace2->print();
 	cout << endl;
-	//bool val2 = zero32->valid((OneString&)*zeroDfaTest, *z32trace2);
-	//cout << "Result on zero32: " << val2 << endl << endl;
+	bool val2 = zero32->valid((OneString&)*zeroDfaTest, *z32trace2);
+	cout << "Result on zero32: " << val2 << endl << endl;
+	
 
 	cout << "testing the accepts function for NFA's:" << endl;
 	cout << "input of '";
