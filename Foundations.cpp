@@ -515,44 +515,8 @@ public:
 			}
 			else return false;
 		}
-		return true;
-
-
-		/*
-		OneString* in = &inputString;
-		OneString* tr = &traceString;
-
-		templ state = q0;
-		templ trState  = ((tr->c.c) - '0');
-		vector<templ> possibleStates{ q0 };
-		vector<templ> tempVec;
-
-		possibleStates.insert(possibleStates.end(), q0);
-		int track = 0;
-		while (!tr->isEmpty() && !in->isEmpty()) {
-			tempVec = this->EDelta(state);
-			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
-			tempVec = this->Delta(state, in->c);
-			possibleStates.insert(possibleStates.end(), tempVec.begin(), tempVec.end());
-			trState = ((tr->c.c) - '0'); // 'converting' the char value to an int
-
-			track = 0;
-			for (templ x : possibleStates) {
-				if (trState == x) { track++; }
-			}
-			if (track < 1) { return false; }
-			tempVec.clear();
-			possibleStates.clear();
-
-			state = trState;
-			in = (OneString*) in->next();
-			tr = (OneString*) tr->next();
-		}
-		tr = (OneString*)tr->next();
-		if (in->isEmpty() && tr->isEmpty()) { return true; }
-		return false; 
-		*/
-		return true;
+		if (tr->isEmpty() && in->isEmpty()) { return true; }
+		return false;
 	}
 
 	// accepts function for NFA 
