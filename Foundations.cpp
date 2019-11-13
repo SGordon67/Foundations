@@ -108,7 +108,7 @@ public:
 
 class TraceEpsilon : public String {
 public:
-	Char ep = Char('E');
+	Char ep = Char('_');
 	TraceEpsilon() {}
 	bool isEmpty() { return true; }
 	Char fChar() { return ep; }
@@ -122,7 +122,7 @@ public:
 	Char state;
 	String* s;
 	TraceString() {
-		this->c = Char('E');
+		this->c = Char('_');
 		this->s = new epsilon();
 	}
 	TraceString(Char c, Char state, String* s) {
