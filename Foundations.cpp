@@ -585,83 +585,54 @@ public:
 	// trace tree function
 	void traceTree(String* inputString) // creates tree of all possible traces
 	{
-		vector<templ> currentStates{ this->q0 }; // keeps track of current states
+		vector<templ> currentStates{}; // keeps track of current states
 		vector<templ> tempVector{};
-		vector<templ> newStates{};
+		vector<templ> newStates{ this->q0 };
 		vector<templ> epsilonStates{};
 		String* temp = inputString;
-		templ state = this->q0;
 
-		cout << endl;
-
+		// trace must always start with the start state
 		cout << "[" << this->q0 << "]" << endl;
 
+		// if the input is empty, print out the start state and epsilon transitions
 		if (temp->isEmpty()) // inputString is the emptyString
 		{
 			cout << "[";
 			tempVector = this->EDelta(this->q0); // check for epsilon transitions from start state
-			currentStates.insert(currentStates.begin(), tempVector.begin(), tempVector.end());
+			currentStates.insert(currentStates.end(), tempVector.begin(), tempVector.end());
 			for (auto x : currentStates) {
-				std::cout << x << " "; // fix format problem
+				std::cout << x; // fix format problem
+				if (x != currentStates.back()) {
+					cout << " ";
+				}
 			}
 			cout << "]";
 		}
+		
+		// loop while the input is not empty
+		while (!temp->isEmpty()) {
+			cout << "[";
 
-
-		//while (!temp->isEmpty()) {
-		//}
-
-		cout << endl << endl;
-
-		currentStates.clear();
-		currentStates.push_back(this->q0);
-		tempVector.clear();
-		newStates.clear();
-		epsilonStates.clear();
-
-		if (temp->isEmpty()) // inputString is the emptyString
-		{
-			tempVector = this->EDelta(this->q0); // check for epsilon transitions from start state
-			currentStates.insert(currentStates.begin(), tempVector.begin(), tempVector.end());
-			std::cout << endl;
-			std::cout << this->q0 << endl;
-			for (auto x : currentStates)
-				std::cout << x << " ";
+			for (auto y : newStates) {
+				tempVector = this->EDelta(y);
+				currentStates.insert(currentStates.end(), tempVector.begin(), tempVector.end());
+				tempVector = this->Delta(y, temp->fChar().c);
+				currentStates.insert(currentStates.end(), tempVector.begin(), tempVector.end());
+			}
+			for (auto x : currentStates) {
+				std::cout << x;
+				if (x != currentStates.back()) {
+					cout << " ";
+				}
+			}
+			cout << "]" << endl;
+			
+			newStates = currentStates;
+			currentStates.clear();
+			temp = (OneString*) temp->next();
 		}
 
-		// step through NFA with the input string
-		while (temp->isEmpty() != true)
-		{
-			newStates.clear(); // prepare to get new set of states from transFunc
-			epsilonStates.clear();
-
-			for (templ x : currentStates)
-			{
-				std::cout << x << temp->fChar().c << " ";
-				tempVector = this->Delta(x, temp->fChar()); // generate new sets of states from input char w/ each current state
-				newStates.insert(newStates.end(), tempVector.begin(), tempVector.end());
-			}
-			std::cout << std::endl; // epsilon transitions from current states will be on next level of tree
-
-			for (templ x : currentStates)
-			{
-				tempVector = this->EDelta(x); // check whether there are epsilon transitions from current states
-				epsilonStates.insert(epsilonStates.end(), tempVector.begin(), tempVector.end());
-			}
-			if (epsilonStates.size() > 0)
-			{
-				for (templ x : epsilonStates) // print all epsilon transitions
-					std::cout << x << temp->fChar().c << " ";
-				std::cout << std::endl;
-			}
-
-			currentStates = newStates; // update current states for next iteration through
-			currentStates.insert(currentStates.end(), epsilonStates.begin(), epsilonStates.end());
-			temp = (OneString*) temp->next(); // move to next character in the string
-		}
-		for (templ x : currentStates)
-			std::cout << x << temp->fChar().c << " ";
-		std::cout << std::endl;
+		cout << endl;
 	}
 };
 
@@ -997,8 +968,8 @@ int main()
 	OneString* test01 = new OneString(Char('0'), new OneString(Char('0'), new epsilon()));
 	//	11
 	OneString* test02 = new OneString(Char('1'), new OneString(Char('1'), new epsilon()));
-
-
+	//	000
+	OneString* test03 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())));
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
 	testDFA(evenL, test2, true);	// Zero characters, true
@@ -1242,9 +1213,9 @@ int main()
 	// Testing trace trees of strings on NFA's
 	cout << "testing the trace tree function on NFAs:" << endl;
 	cout << "input of '";
-	test01->print();
+	test03->print();
 	cout << "' on zero32" << endl;
-	zero32->traceTree(test01);
+	zero32->traceTree(test03);
 
 	cout << "input of '";
 	test2->print();
