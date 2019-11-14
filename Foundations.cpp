@@ -586,9 +586,10 @@ public:
 	void traceTree(String* inputString) // creates tree of all possible traces
 	{
 		vector<templ> currentStates{}; // keeps track of current states
+		vector<templ> epsilonStates{};
+		vector<templ> comboStates{};
 		vector<templ> tempVector{};
 		vector<templ> newStates{ this->q0 };
-		vector<templ> epsilonStates{};
 		String* temp = inputString;
 
 		// trace must always start with the start state
@@ -601,7 +602,9 @@ public:
 			tempVector = this->EDelta(this->q0); // check for epsilon transitions from start state
 			currentStates.insert(currentStates.end(), tempVector.begin(), tempVector.end());
 			for (auto x : currentStates) {
-				std::cout << x; // fix format problem
+				if (this->F(x)) { cout << "("; }
+				std::cout << x;
+				if (this->F(x)) { cout << ")"; }
 				if (x != currentStates.back()) {
 					cout << " ";
 				}
@@ -612,26 +615,39 @@ public:
 		// loop while the input is not empty
 		while (!temp->isEmpty()) {
 			cout << "[";
-
+			// gather all the epsilon and delta transitions and save resulting states
 			for (auto y : newStates) {
 				tempVector = this->EDelta(y);
-				currentStates.insert(currentStates.end(), tempVector.begin(), tempVector.end());
+				epsilonStates.insert(epsilonStates.end(), tempVector.begin(), tempVector.end());
+				comboStates.insert(comboStates.end(), tempVector.begin(), tempVector.end());
 				tempVector = this->Delta(y, temp->fChar().c);
 				currentStates.insert(currentStates.end(), tempVector.begin(), tempVector.end());
+				comboStates.insert(comboStates.end(), tempVector.begin(), tempVector.end());
 			}
-			for (auto x : currentStates) {
-				std::cout << x;
-				if (x != currentStates.back()) {
+			// outputting the resulting states with formatting
+			for (auto x : comboStates) {
+				if (this->F(x)) { 
+					cout << "(" << x << ")"; 
+				}
+				else {
+					cout << " " << x << " ";
+				}
+				if (x != comboStates.back()) {
 					cout << " ";
 				}
 			}
 			cout << "]" << endl;
 			
-			newStates = currentStates;
+			// reset all the local variables
+			// if you didnt delta transition, dont use up a character
+			newStates = comboStates;
+			if (!currentStates.empty()) {
+				temp = (OneString*)temp->next();
+			}
 			currentStates.clear();
-			temp = (OneString*) temp->next();
+			epsilonStates.clear();
+			comboStates.clear();
 		}
-
 		cout << endl;
 	}
 };
