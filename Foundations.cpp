@@ -585,12 +585,12 @@ public:
 	// trace tree function
 	void traceTree(String* inputString) // creates tree of all possible traces
 	{
-		vector<templ> currentStates{}; // keeps track of current states
-		vector<templ> epsilonStates{};
-		vector<templ> comboStates{};
-		vector<templ> tempVector{};
-		vector<templ> newStates{ this->q0 };
-		String* temp = inputString;
+		vector<templ> currentStates{};	// used for delta function
+		vector<templ> epsilonStates{};	// used for epsilon transitions
+		vector<templ> comboStates{};	// combines delta and epsilon states
+		vector<templ> tempVector{};		// used to gather input for each vector
+		vector<templ> newStates{ this->q0 }; // keeps track of what happened in the last iteration
+		String* temp = inputString;		// character input
 
 		// trace must always start with the start state
 		cout << "[" << this->q0 << "]" << endl;
@@ -637,7 +637,6 @@ public:
 				}
 			}
 			cout << "]" << endl;
-			
 			// reset all the local variables
 			// if you didnt delta transition, dont use up a character
 			newStates = comboStates;
@@ -650,9 +649,245 @@ public:
 		}
 		cout << endl;
 	}
+
 };
 
+template<class templ>
+class NFAUnionState {
+public:
+	pair<int, templ> p;
+	NFAUnionState() {};
+	NFAUnionState(int x, templ state) {
+		p.first = x;
+		p.second = state;
+	}
+	bool isStartState() {
+		if (p.first == 0) { return true; }
+		else return false;
+	}
+	bool isAcceptState() {
+		if (p.first == 1) { return true; }
+		else return false;
+	}
+	bool fromX() {
+		if (p.first == 2) { return true; }
+		else return false;
+	}
+	bool fromY() {
+		if (p.first == 3) { return true; }
+		else return false;
+	}
+};
+
+template<class templ>
+NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
+	return new NFA<NFAUnionState<templ>>([=](NFAUnionState<templ> qi) -> bool { 
+		if (qi.p.first == 0) { 
+			return qi.isStartState();
+		}
+		else if (qi.p.first == 1) {
+			return qi.isAcceptState();
+		}
+		else if (qi.p.first == 2) {
+			return input1.Q(qi.p.second);
+		}
+		else if (qi.p.first == 3) {
+			return input2.Q(qi.p.second);
+		}
+		},
+		input1.v,
+		NFAUnionState<templ>(0, input1.q0),
+		[=](NFAUnionState<templ> qi, Char c) {
+			vector<NFAUnionState<templ>> ret{};
+			if (qi.isStartState()) {
+				return ret;
+			}
+			else if (qi.isAcceptState()) {
+				return ret;
+			}
+			else if (qi.fromX()) {
+				vector<templ> temp = input1.Delta(qi.p.second, c);
+				for (templ x : temp) {
+					NFAUnionState<templ> sc(2, x);
+					ret.push_back(sc);
+				}
+				temp.clear();
+				return ret;
+			}
+			else if (qi.fromY()) {
+				vector<templ> temp = input2.Delta(qi.p.second, c);
+				for (templ x : temp) {
+					NFAUnionState<templ> sc(3, x);
+					ret.push_back(sc);
+				}
+				temp.clear();
+				return ret;
+			}
+		},
+		[=](NFAUnionState<templ> qi) {
+			vector<NFAUnionState<templ>> ret{};
+			vector<templ> temp{};
+			if (qi.p.first == 0) {
+				return vector<NFAUnionState<templ>>{NFAUnionState<templ>(2, input1.q0), NFAUnionState<templ>(3, input2.q0)};
+			}
+			else if(qi.p.first == 1){
+				return ret;
+			}
+			else if (qi.p.first == 2) {
+				temp = input1.EDelta(qi.p.second);
+				for (templ x : temp) {
+					NFAUnionState<templ> sc(2, x);
+					ret.push_back(sc);
+				}
+				if (input1.F(qi.p.second)) {
+					ret.push_back(NFAUnionState<templ>(1, qi.p.second));
+				}
+				return ret;
+			}
+			else if (qi.p.first == 3) {
+				temp = input2.EDelta(qi.p.second);
+				for (templ x : temp) {
+					NFAUnionState<templ> sc(3, x);
+					ret.push_back(sc);
+				}
+				if (input2.F(qi.p.second)) {
+					ret.push_back(NFAUnionState<templ>(1, qi.p.second));
+				}
+				return ret;
+			}
+		},
+		[](NFAUnionState<templ> qi) {
+			return qi.isAcceptState();
+		});
+}
+
 //***************************NFA END****************************//
+
+//***************************REG EXP****************************//
+
+class regex {
+public:
+	bool isMtRegex;
+	bool isEpsRegex;
+	bool isCharRegex;
+	bool isUnionRegex;
+	bool isStarRegex;
+	bool isConcatRegex;
+	regex() {
+		this->isMtRegex = false;
+		this->isEpsRegex = false;
+		this->isCharRegex = false;
+		this->isUnionRegex = false;
+		this->isStarRegex = false;
+		this->isConcatRegex = false;
+	};
+	virtual void print() {
+	}
+};
+class mtRegex : public regex {
+public:
+	mtRegex(){
+		this->isMtRegex = true;
+		this->isEpsRegex = false;
+		this->isCharRegex = false;
+		this->isUnionRegex = false;
+		this->isStarRegex = false;
+		this->isConcatRegex = false;
+	}
+	void print() {
+		cout << "";
+	}
+};
+class epsRegex : public regex {
+public:
+	epsRegex(){
+		this->isMtRegex = false;
+		this->isEpsRegex = true;
+		this->isCharRegex = false;
+		this->isUnionRegex = false;
+		this->isStarRegex = false;
+		this->isConcatRegex = false;
+	}
+	void print() {
+		cout << "_";
+	}
+};
+class charRegex : public regex {
+public:
+	Char c;
+	charRegex(Char c){
+		this->c = c;
+		this->isMtRegex = false;
+		this->isEpsRegex = false;
+		this->isCharRegex = true;
+		this->isUnionRegex = false;
+		this->isStarRegex = false;
+		this->isConcatRegex = false;
+	}
+	void print() {
+		cout << this->c.c;
+	}
+};
+class unionRegex : public regex {
+public:
+	regex* left;
+	regex* right;
+	unionRegex(regex* left, regex* right){
+		this->left = left;
+		this->right = right;
+		this->isMtRegex = false;
+		this->isEpsRegex = false;
+		this->isCharRegex = false;
+		this->isUnionRegex = true;
+		this->isStarRegex = false;
+		this->isConcatRegex = false;
+	}
+	void print() {
+		cout << "(";
+		this->left->print();
+		cout << " U ";
+		this->right->print();
+		cout << ")";
+	}
+};
+class starRegex : public regex {
+public:
+	regex* r;
+	starRegex(regex* r){
+		this->r = r;
+		this->isMtRegex = false;
+		this->isEpsRegex = false;
+		this->isCharRegex = false;
+		this->isUnionRegex = false;
+		this->isStarRegex = true;
+		this->isConcatRegex = false;
+	}
+	void print() {
+		cout << "(";
+		this->r->print();
+		cout << ")*";
+	}
+};
+class concatRegex : public regex {
+public:
+	regex* left;
+	regex* right;
+	concatRegex(regex* left, regex* right) {
+		this->left = left;
+		this->right = right;
+		this->isMtRegex = false;
+		this->isEpsRegex = false;
+		this->isCharRegex = false;
+		this->isUnionRegex = false;
+		this->isStarRegex = false;
+		this->isConcatRegex = true;
+	}
+	void print() {
+		this->left->print();
+		this->right->print();
+	}
+};
+//***************************REG END****************************//
 
 int main()
 {
@@ -872,6 +1107,44 @@ int main()
 
 	//***************************NFA section************************//
 
+	// third from the end is 1
+	auto thirdFromEnd1 =
+		new NFA<char>
+		([](int qi) { return qi == '0' || qi == '1' || qi == '2' || qi == '3'; },
+			binary,
+			'0',
+			[](char qi, Char c) {
+				vector<char> vec{};
+				vector<char> vec0{ '0' };
+				vector<char> vec1{ '1' };
+				vector<char> vec2{ '2' };
+				vector<char> vec3{ '3' };
+				vector<char> vec01{ '0','1' };
+				if (qi == '0') {
+					if (c.c == '1') {
+						return vec01;
+					}
+					else {
+						return vec0;
+					}
+				}
+				else if (qi == '1') {
+					return vec2;
+				}
+				else if (qi == '2') {
+					return vec3;
+				}
+				else if (qi == '3') {
+					return vec;
+				}
+				else return vec;
+			},
+			[](char qi) {
+				vector<char> vec{};
+				return vec;
+			},
+				[](char qi) { return qi == '3'; });
+
 	// accepts a string of zeros with length divisable by 2 or 3
 	auto zero32 =
 		new NFA<char>
@@ -957,6 +1230,8 @@ int main()
 			},
 			[](char qi) { return qi == '1'; });
 
+	auto unionOfEndsIn0ANDThirdFromEndIsOne = UnionNFA(*endInZeroNFA, *thirdFromEnd1);
+
 	//************************End of NFA section********************//
 	//	0
 	OneString* test1 = new OneString(Char('0'), new epsilon());
@@ -986,6 +1261,12 @@ int main()
 	OneString* test02 = new OneString(Char('1'), new OneString(Char('1'), new epsilon()));
 	//	000
 	OneString* test03 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())));
+	//	100
+	OneString* test04 = new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())));
+	//	1100
+	OneString* test05 = new OneString(Char('1'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon()))));
+
+
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
 	testDFA(evenL, test2, true);	// Zero characters, true
@@ -1142,7 +1423,6 @@ int main()
 	// END OF DFA TESTING
 
 
-
 	// NFA TESTING
 	
 	// traces of nfa behavior
@@ -1170,7 +1450,6 @@ int main()
 	bool val = zero32->valid((OneString&)*zeroDfaTest, *z32trace1);
 	cout << "Result on zero32: " << val << endl << endl;
 
-	
 	cout << "inputString: ";
 	zeroDfaTest->print();
 	cout << endl << "traceString: ";
@@ -1179,7 +1458,7 @@ int main()
 	bool val2 = zero32->valid((OneString&)*zeroDfaTest, *z32trace2);
 	cout << "Result on zero32: " << val2 << endl << endl;
 	
-	// should be false
+	// correctly returns false
 	cout << "inputString: ";
 	zeroDfaTest->print();
 	cout << endl << "traceString: ";
@@ -1188,8 +1467,7 @@ int main()
 	bool val3 = zero32->valid((OneString&)*zeroDfaTest, *z32trace3);
 	cout << "Result on zero32: " << val3 << endl << endl;
 
-
-
+	// testing accepts function
 	cout << "testing the accepts function for NFAs:" << endl;
 	cout << "input of '";
 	test01->print();
@@ -1226,7 +1504,29 @@ int main()
 	cout << "' on endInZeroNFA" << endl;
 	cout << "result: " << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl << endl;
 
-	// Testing trace trees of strings on NFA's
+	cout << "input of '";
+	test02->print();
+	cout << "' on thirdFromEnd1" << endl;
+	cout << "result: " << thirdFromEnd1->accepts(*test02) << endl << endl;
+
+	cout << "input of '";
+	test04->print();
+	cout << "' on thirdFromEnd1" << endl;
+	cout << "result: " << thirdFromEnd1->accepts(*test04) << endl << endl;
+	
+	cout << "input of '";
+	test05->print();
+	cout << "' on thirdFromEnd1" << endl;
+	cout << "result: " << thirdFromEnd1->accepts(*test05) << endl << endl;
+
+	// testing accepts on union NFA unionOfEndsIn0ANDThirdFromEndIsOne
+	cout << "Testing accepts function on union NFAs";
+	cout << "input of '";
+	test04->print();
+	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
+	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test04) << endl << endl;
+
+	// Testing trace tree function for strings on NFAs
 	cout << "testing the trace tree function on NFAs:" << endl;
 	cout << "input of '";
 	test03->print();
@@ -1237,4 +1537,13 @@ int main()
 	test2->print();
 	cout << "' on zero32" << endl;
 	zero32->traceTree(test2);
+	cout << endl;
+
+
+	// Testing Regular expressions
+	concatRegex* example = new concatRegex(new charRegex(Char('A')), new starRegex(new unionRegex(new charRegex(Char('B')), new charRegex(Char('B')))));
+	cout << "Testing regular expressions" << endl;
+	//cout << example << endl;
+	example->print();
+	cout << endl;
 }
