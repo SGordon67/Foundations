@@ -783,6 +783,9 @@ public:
 	};
 	virtual void print() {
 	}
+	virtual String* generate() {
+		return new epsilon();
+	}
 };
 class mtRegex : public regex {
 public:
@@ -797,6 +800,9 @@ public:
 	void print() {
 		cout << "";
 	}
+	String* generate() {
+		return new epsilon();
+	}
 };
 class epsRegex : public regex {
 public:
@@ -810,6 +816,9 @@ public:
 	}
 	void print() {
 		cout << "_";
+	}
+	String* generate() {
+		return new epsilon();
 	}
 };
 class charRegex : public regex {
@@ -826,6 +835,9 @@ public:
 	}
 	void print() {
 		cout << this->c.c;
+	}
+	String* generate() {
+		return new OneString(Char(this->c.c), new epsilon());
 	}
 };
 class unionRegex : public regex {
@@ -849,6 +861,9 @@ public:
 		this->right->print();
 		cout << ")";
 	}
+	OneString* generate() {
+		return ((OneString*)left->generate());
+	}
 };
 class starRegex : public regex {
 public:
@@ -866,6 +881,9 @@ public:
 		cout << "(";
 		this->r->print();
 		cout << ")*";
+	}
+	OneString* generate() {
+		return ((OneString*) r->generate());
 	}
 };
 class concatRegex : public regex {
@@ -886,7 +904,23 @@ public:
 		this->left->print();
 		this->right->print();
 	}
+	OneString* generate() {
+		OneString* L = (OneString*) left->generate();
+		OneString* R = (OneString*) right->generate();
+		OneString* index = L;
+		
+		while (!index->next()->isEmpty()) {
+			index = (OneString*)index->next();
+		}
+		index->s = R;
+
+		return L;
+	}
 };
+
+OneString* generator(regex* input) {
+	return ((OneString*) input->generate());
+}
 //***************************REG END****************************//
 
 int main()
@@ -1541,9 +1575,127 @@ int main()
 
 
 	// Testing Regular expressions
-	concatRegex* example = new concatRegex(new charRegex(Char('A')), new starRegex(new unionRegex(new charRegex(Char('B')), new charRegex(Char('B')))));
-	cout << "Testing regular expressions" << endl;
-	//cout << example << endl;
-	example->print();
+	//	A((B U C))*
+	concatRegex* re1 = new concatRegex(
+		new charRegex(Char('A')), 
+		new starRegex(
+			new unionRegex(
+				new charRegex(Char('B')), 
+				new charRegex(Char('C')))));
+	//	ABC
+	concatRegex* re2 = new concatRegex(
+		new charRegex(Char('A')), 
+		new concatRegex(
+			new charRegex(Char('B')), 
+			new charRegex(Char('C'))));
+	//	((A U BC)* U D(E)*)
+	unionRegex* re3 = new unionRegex(
+		new starRegex(
+			new unionRegex(
+				new charRegex(Char('A')),
+				new concatRegex(
+					new charRegex(Char('B')), 
+					new charRegex(Char('C'))))), 
+		new concatRegex(
+			new charRegex(Char('D')), 
+			new starRegex(
+				new charRegex(Char('E')))));
+	//	(HELLO)*
+	starRegex* re4 = new starRegex(
+		new concatRegex(
+			new concatRegex(
+				new charRegex(Char('H')),
+				new charRegex(Char('E'))),
+			new concatRegex(
+				new concatRegex(
+					new charRegex(Char('L')),
+					new charRegex(Char('L'))),
+				new charRegex(Char('O')))));
+
+	//	((0 U 1))*
+	starRegex* re5 = new starRegex(
+		new unionRegex(
+			new charRegex(Char('0')),
+			new charRegex(Char('1'))));
+
+	//	(01)*
+	starRegex* re6 = new starRegex(
+		new concatRegex(
+			new charRegex(Char('0')),
+			new charRegex(Char('1'))));
+
+	//	(((0 U 1))* U (01)*)
+	unionRegex* re7 = new unionRegex(re5, re6);
+	
+
+	// accepting: 1,3			rejecting: 2,4,5,6,7
+	OneString* reTest1 = new OneString(Char('A'), new OneString(Char('B'), new epsilon()));
+
+	// accepting: 1,3			rejecting: 2,4,5,6,7
+	OneString* reTest2 = new OneString(Char('A'), new OneString(Char('C'), new epsilon()));
+
+	// accepting: 3			rejecting: 1
+	OneString* reTest3 = new OneString(Char('B'), new OneString(Char('C'), new epsilon()));
+
+	// accepting: 			rejecting: 1,2,3,4,5,6,7
+	OneString* reTest4 = new OneString(Char('C'), new OneString(Char('B'), new epsilon()));
+
+	// accepting: 2			rejecting: 1,3,4,5,6,7
+	OneString* reTest5 = new OneString(Char('A'), new OneString(Char('B'), new OneString(Char('C'), new epsilon())));
+
+	// accepting: 3			rejecting: 1,2,4,5,6,7
+	OneString* reTest6 = new OneString(Char('D'), new OneString(Char('E'), new epsilon()));
+	
+	// accepting: 4			rejecting: 1,2,3,5,6,7
+	OneString* reTest7 = new OneString(Char('H'), new OneString(Char('E'), new OneString(Char('L'), new OneString(Char('L'), new OneString(Char('O'), new epsilon())))));
+
+	// accepting: 5,7			rejecting: 1,2,3,4,6
+	OneString* reTest8 = new OneString(Char('0'), new epsilon());
+
+	// accepting: 5,7			rejecting: 1,2,3,4,6
+	OneString* reTest9 = new OneString(Char('1'), new epsilon());
+
+	// accepting: 6,7			rejecting: 1,2,3,4,5
+	OneString* reTest10 = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
+
+	cout << "Testing regular expressions:" << endl;
+	cout << "Examples of regular expressions:" << endl;
+	re1->print();
+	cout << endl;
+	re2->print();
+	cout << endl;
+	re3->print();
+	cout << endl;
+	re4->print();
+	cout << endl;
+	re5->print();
+	cout << endl;
+	re6->print();
+	cout << endl;
+	re7->print();
+	cout << endl;
+
+
+	// testing generator
+	OneString* gen1 = re1->generate();
+	gen1->print();
+	cout << endl;
+	OneString* gen2 = re2->generate();
+	gen2->print();
+	cout << endl;
+	OneString* gen3 = re3->generate();
+	gen3->print();
+	cout << endl;
+	OneString* gen4 = re4->generate();
+	gen4->print();
+	cout << endl;
+	OneString* gen5 = re5->generate();
+	gen5->print();
+	cout << endl;
+	OneString* gen6 = re6->generate();
+	gen6->print();
+	cout << endl;
+	OneString* gen7 = re7->generate();
+	gen7->print();
 	cout << endl;
 }
