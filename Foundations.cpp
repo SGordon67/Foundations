@@ -576,7 +576,7 @@ public:
 		// then the string isnt accepted
 		for (templ x : currentStates)
 		{
-			if (F(x))
+			if (this->F(x))
 				return true;
 		}
 		return false;
@@ -1559,6 +1559,12 @@ int main()
 	test04->print();
 	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
 	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test04) << endl << endl;
+
+	// Need to go back and complete:
+	// fix union function (wrong output value)
+	// Concatonation of NFAs
+	// Kleene star function
+	// function to turn NFAs into DFAs
 
 	// Testing trace tree function for strings on NFAs
 	cout << "testing the trace tree function on NFAs:" << endl;
