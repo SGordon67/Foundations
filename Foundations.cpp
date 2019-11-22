@@ -655,7 +655,7 @@ public:
 template<class templ>
 class NFAUnionState {
 public:
-	pair<int, templ> p;
+	/*pair<int, templ> p;
 	NFAUnionState() {};
 	NFAUnionState(int x, templ state) {
 		p.first = x;
@@ -665,10 +665,6 @@ public:
 		if (p.first == 0) { return true; }
 		else return false;
 	}
-	bool isAcceptState() {
-		if (p.first == 1) { return true; }
-		else return false;
-	}
 	bool fromX() {
 		if (p.first == 2) { return true; }
 		else return false;
@@ -676,88 +672,82 @@ public:
 	bool fromY() {
 		if (p.first == 3) { return true; }
 		else return false;
+	}*/
+	bool isStartState;
+	bool isAcceptingState;
+	templ fromX;
+	templ fromY;
+
+	NFAUnionState() { 
+		cout << "why the hell am i here I should never reach this point in my code its just here to compile, thanks"; };
+	NFAUnionState(bool isStartState, bool isAcceptingState, templ fromX, templ fromY) {
+		this->isStartState = isStartState;
+		this->isAcceptingState = isAcceptingState;
+		this->fromX = fromX;
+		this->fromY = fromY;
 	}
 };
 
 template<class templ>
 NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
-	return new NFA<NFAUnionState<templ>>([=](NFAUnionState<templ> qi) -> bool { 
-		if (qi.p.first == 0) { 
-			return qi.isStartState();
+	templ state = '_';
+	return new NFA<NFAUnionState<templ>>([=](NFAUnionState<templ> qi) -> bool {
+		if (qi.isStartState || qi.isAcceptingState) {
+			return true;
 		}
-		else if (qi.p.first == 1) {
-			return qi.isAcceptState();
-		}
-		else if (qi.p.first == 2) {
-			return input1.Q(qi.p.second);
-		}
-		else if (qi.p.first == 3) {
-			return input2.Q(qi.p.second);
-		}
+		else return(input1.Q(qi.fromX) || input2.Q(qi.fromY));
 		},
 		input1.v,
-		NFAUnionState<templ>(0, input1.q0),
-		[=](NFAUnionState<templ> qi, Char c) {
+			NFAUnionState<templ>(1, 0, state, state),
+			[=](NFAUnionState<templ> qi, Char c) {
 			vector<NFAUnionState<templ>> ret{};
-			if (qi.isStartState()) {
+			if (qi.isStartState) {
 				return ret;
 			}
-			else if (qi.isAcceptState()) {
-				return ret;
-			}
-			else if (qi.fromX()) {
-				vector<templ> temp = input1.Delta(qi.p.second, c);
-				for (templ x : temp) {
-					NFAUnionState<templ> sc(2, x);
-					ret.push_back(sc);
+			vector<templ> temp = input1.Delta(qi.fromX, c);
+			vector<templ> temp2 = input2.Delta(qi.fromY, c);
+			bool acceptTemp = 0;
+			for (templ x : temp) {
+				for (templ y : temp2) {
+					if (input1.F(x) || input2.F(y)) {
+						acceptTemp = 1;
+					}
+					else acceptTemp = 0;
+					NFAUnionState<templ> ex(0, acceptTemp, x, y);
+					ret.push_back(ex);
 				}
-				temp.clear();
-				return ret;
 			}
-			else if (qi.fromY()) {
-				vector<templ> temp = input2.Delta(qi.p.second, c);
-				for (templ x : temp) {
-					NFAUnionState<templ> sc(3, x);
-					ret.push_back(sc);
+			return ret;
+			},
+			[=](NFAUnionState<templ> qi) {
+			vector<NFAUnionState<templ>> ret{};
+			bool acceptTemp = 0;
+
+			if (qi.isStartState) {
+				if (input1.F(input1.q0) || input2.F(input2.q0)) {
+					acceptTemp = 1;
 				}
-				temp.clear();
+				NFAUnionState<templ> ex(0, acceptTemp, input1.q0, input2.q0);
+				ret.push_back(ex);
 				return ret;
 			}
+
+			vector<templ> temp = input1.EDelta(qi.fromX);
+			vector<templ> temp2 = input2.EDelta(qi.fromY);
+			for (templ x : temp) {
+				for (templ y : temp2) {
+					if (input1.F(x) || input2.F(y)) {
+						acceptTemp = 1;
+					}
+					else acceptTemp = 0;
+					NFAUnionState<templ> ex(0, acceptTemp, x, y);
+					ret.push_back(ex);
+				}
+			}
+			return ret;
 		},
 		[=](NFAUnionState<templ> qi) {
-			vector<NFAUnionState<templ>> ret{};
-			vector<templ> temp{};
-			if (qi.p.first == 0) {
-				return vector<NFAUnionState<templ>>{NFAUnionState<templ>(2, input1.q0), NFAUnionState<templ>(3, input2.q0)};
-			}
-			else if(qi.p.first == 1){
-				return ret;
-			}
-			else if (qi.p.first == 2) {
-				temp = input1.EDelta(qi.p.second);
-				for (templ x : temp) {
-					NFAUnionState<templ> sc(2, x);
-					ret.push_back(sc);
-				}
-				if (input1.F(qi.p.second)) {
-					ret.push_back(NFAUnionState<templ>(1, qi.p.second));
-				}
-				return ret;
-			}
-			else if (qi.p.first == 3) {
-				temp = input2.EDelta(qi.p.second);
-				for (templ x : temp) {
-					NFAUnionState<templ> sc(3, x);
-					ret.push_back(sc);
-				}
-				if (input2.F(qi.p.second)) {
-					ret.push_back(NFAUnionState<templ>(1, qi.p.second));
-				}
-				return ret;
-			}
-		},
-		[](NFAUnionState<templ> qi) {
-			return qi.isAcceptState();
+			return qi.isAcceptingState;
 		});
 }
 
@@ -1299,7 +1289,10 @@ int main()
 	OneString* test04 = new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())));
 	//	1100
 	OneString* test05 = new OneString(Char('1'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon()))));
-
+	//	101
+	OneString* test06 = new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('1'), new epsilon())));
+	//	1
+	OneString* test07 = new OneString(Char('1'), new epsilon());
 
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
@@ -1539,6 +1532,11 @@ int main()
 	cout << "result: " << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl << endl;
 
 	cout << "input of '";
+	test5->print();
+	cout << "' on endInZeroNFA" << endl;
+	cout << "result: " << endInZeroNFA->accepts(*test5) << endl << endl;
+
+	cout << "input of '";
 	test02->print();
 	cout << "' on thirdFromEnd1" << endl;
 	cout << "result: " << thirdFromEnd1->accepts(*test02) << endl << endl;
@@ -1553,12 +1551,37 @@ int main()
 	cout << "' on thirdFromEnd1" << endl;
 	cout << "result: " << thirdFromEnd1->accepts(*test05) << endl << endl;
 
+	cout << "input of '";
+	test5->print();
+	cout << "' on thirdFromEnd1" << endl;
+	cout << "result: " << thirdFromEnd1->accepts(*test5) << endl << endl;
+
 	// testing accepts on union NFA unionOfEndsIn0ANDThirdFromEndIsOne
-	cout << "Testing accepts function on union NFAs";
+	cout << "Testing accepts function on union NFAs" << endl;
 	cout << "input of '";
 	test04->print();
 	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
 	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test04) << endl << endl;
+
+	cout << "input of '";
+	test5->print();
+	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
+	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test5) << endl << endl;
+
+	cout << "input of '";
+	test06->print();
+	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
+	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test06) << endl << endl;
+
+	cout << "input of '";
+	test4->print();
+	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
+	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test4) << endl << endl;
+
+	cout << "input of '";
+	test07->print();
+	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
+	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test07) << endl << endl;
 
 	// Need to go back and complete:
 	// fix union function (wrong output value)
