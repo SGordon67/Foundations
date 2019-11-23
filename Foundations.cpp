@@ -722,27 +722,27 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 				else acceptTemp = 0;
 				NFAUnionState<templ> ex(0, acceptTemp, input1.q0, input2.q0);
 				ret.push_back(ex);
-				return ret;
 			}
-
-			vector<templ> temp = input1.EDelta(qi.fromX);
-			vector<templ> temp2 = input2.EDelta(qi.fromY);
-			// take all possible combos of states created with epsilon trans of both NFAs
-			for (templ x : temp) {
-				for (templ y : temp2) {
-					if (input1.F(x) || input2.F(y)) {
-						acceptTemp = 1;
+			else {
+				vector<templ> temp = input1.EDelta(qi.fromX);
+				vector<templ> temp2 = input2.EDelta(qi.fromY);
+				// take all possible combos of states created with epsilon trans of both NFAs
+				for (templ x : temp) {
+					for (templ y : temp2) {
+						if (input1.F(x) || input2.F(y)) {
+							acceptTemp = 1;
+						}
+						else acceptTemp = 0;
+						// make a union state out of the pair and add it to the returning vector
+						NFAUnionState<templ> ex(0, acceptTemp, x, y);
+						ret.push_back(ex);
 					}
-					else acceptTemp = 0;
-					// make a union state out of the pair and add it to the returning vector
-					NFAUnionState<templ> ex(0, acceptTemp, x, y);
-					ret.push_back(ex);
 				}
 			}
 			return ret;
 		},
 		[=](NFAUnionState<templ> qi) {
-			return qi.isAcceptingState;
+			return (input1.F(qi.fromX) || input2.F(qi.fromY));
 		});
 }
 
@@ -819,6 +819,40 @@ NFA<NFAConcatState<templ>>* ConcatNFA(NFA<templ> input1, NFA<templ> input2) {
 				return input2.F(qi.fromY);
 			});
 }
+
+template<class templ>
+NFA<templ>* KleeneStar(NFA<templ> input) {
+	templ state = '_';
+	return new NFA<templ>(
+		[=](templ qi) -> bool {
+			return (input.Q(qi) || qi == '_');
+		},
+		input.v,
+			state,
+			[=](templ qi, Char c) {
+			vector<templ> ret{};
+			ret = input.Delta(qi, c);
+			return ret;
+		},
+			[=](templ qi) {
+			vector<templ> ret{};
+			vector<templ> temp{};
+			if (qi == state || input.F(qi)) {
+				ret.push_back(input.q0);
+			}
+			else {
+				temp = input.EDelta(qi);
+				for (templ x : temp) {
+					ret.push_back(x);
+				}
+			}
+			return ret;
+		},
+			[=](templ qi) {
+			return (input.F(qi) || qi == state);
+		});
+}
+
 //***************************NFA END****************************//
 
 //***************************REG EXP****************************//
@@ -1310,11 +1344,16 @@ int main()
 					if (c.c == '0') {
 						return vecab;
 					}
-					else if (c.c == '1') {
-						return veca;
-					}
+					else return veca;
 				}
-				else return vec;
+				//else return vec;
+				else if (qi == 'b') {
+					if (c.c == '0') {
+						return vecb;
+					}
+					else return veca;
+				}
+				else return veca;
 			},
 			[](char qi) {
 				vector<char> vec{};
@@ -1337,31 +1376,7 @@ int main()
 					}
 					else return vec;
 				}
-				else return vecb;
-			},
-			[](char qi) {
-				vector<char> vec{};
-				return vec;
-			},
-				[](char qi) { return qi == 'b'; });
-
-	auto containsZero =
-		new NFA<char>
-		([](int qi) { return qi == 'a' || qi == 'b'; },
-			binary,
-			'a',
-			[](char qi, Char c) {
-				vector<char> vec{};
-				vector<char> vecb{ 'b' };
-				vector<char> veca{ 'a' };
-				vector<char> vecab{ 'a', 'b' };
-				if (qi == 'a') {
-					if (c.c == '0') {
-						return vecab;
-					}
-					else return veca;
-				}
-				else return vecab;
+				return vecb;
 			},
 			[](char qi) {
 				vector<char> vec{};
@@ -1404,6 +1419,14 @@ int main()
 
 	auto Ends0ThenContains1 = ConcatNFA(*ends0, *containsOne);
 
+	auto Contains1ThenContains1 = ConcatNFA(*containsOne, *containsOne);
+
+	// KleeneStar
+	auto KSEnds0 = KleeneStar(*ends0);
+
+	auto KSThirdEnd1 = KleeneStar(*thirdFromEnd1);
+
+
 	//************************End of NFA section********************//
 	//	0
 	OneString* test1 = new OneString(Char('0'), new epsilon());
@@ -1422,7 +1445,7 @@ int main()
 	//	010
 	OneString* test7 = new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new epsilon())));
 	//	0000
-	String* zeroDfaTest = nString(16, binary); // String of 4 zeros 
+	String* zeroDfaTest = nString(16, binary);
 	//	370
 	OneString* test8 = new OneString(Char('3'), new OneString(Char('7'), new OneString(Char('0'), new epsilon())));
 	//	523
@@ -1441,6 +1464,12 @@ int main()
 	OneString* test06 = new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('1'), new epsilon())));
 	//	1
 	OneString* test07 = new OneString(Char('1'), new epsilon());
+	//	00100
+	OneString* test08 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())))));
+	//	100100100
+	OneString* test09 = new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())))))))));
+	//	00010
+	OneString* test11 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new epsilon())))));
 
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
@@ -1717,31 +1746,6 @@ int main()
 
 	cout << "input of '";
 	test01->print();
-	cout << "' on containsZero" << endl;
-	cout << "result: " << containsZero->accepts(*test01) << endl;
-	cout << "input of '";
-	test3->print();
-	cout << "' on containsZero" << endl;
-	cout << "result: " << containsZero->accepts(*test3) << endl;
-	cout << "input of '";
-	test02->print();
-	cout << "' on containsZero" << endl;
-	cout << "result: " << containsZero->accepts(*test02) << endl;
-	cout << "input of '";
-	zeroDfaTest->print();
-	cout << "' on containsZero" << endl;
-	cout << "result: " << containsZero->accepts((OneString&)*zeroDfaTest) << endl;
-	cout << "input of '";
-	test5->print();
-	cout << "' on containsZero" << endl;
-	cout << "result: " << containsZero->accepts(*test5) << endl;
-	cout << "input of '";
-	test4->print();
-	cout << "' on containsZero" << endl;
-	cout << "result: " << containsZero->accepts(*test4) << endl << endl;
-
-	cout << "input of '";
-	test01->print();
 	cout << "' on containsOne" << endl;
 	cout << "result: " << containsOne->accepts(*test01) << endl;
 	cout << "input of '";
@@ -1853,11 +1857,11 @@ int main()
 	cout << "' on Contains1ANDThirdEnd1" << endl;
 	cout << "result: " << Contains1ANDThirdEnd1->accepts(*test3) << endl << endl;
 
-	// testing with Ends0ANDstarts0
+	// testing with Ends0ANDstarts0 
 	cout << "input of '";
-	test4->print();
+	test04->print();	// *******************************
 	cout << "' on Ends0ANDstarts0" << endl;
-	cout << "result: " << Ends0ANDstarts0->accepts(*test4) << endl;
+	cout << "result: " << Ends0ANDstarts0->accepts(*test04) << endl;
 	cout << "input of '";
 	test5->print();
 	cout << "' on Ends0ANDstarts0" << endl;
@@ -1901,8 +1905,86 @@ int main()
 	cout << "' on Ends0ThenContains1" << endl;
 	cout << "result: " << Ends0ThenContains1->accepts(*test07) << endl << endl << endl;
 
+	// testing with Contains1ThenContains1
+	cout << "input of '";
+	test4->print();
+	cout << "' on Contains1ThenContains1" << endl;
+	cout << "result: " << Contains1ThenContains1->accepts(*test4) << endl;
+	cout << "input of '";
+	test5->print();
+	cout << "' on Contains1ThenContains1" << endl;
+	cout << "result: " << Contains1ThenContains1->accepts(*test5) << endl;
+	cout << "input of '";
+	test06->print();
+	cout << "' on Contains1ThenContains1" << endl;
+	cout << "result: " << Contains1ThenContains1->accepts(*test06) << endl;
+	cout << "input of '";
+	test01->print();
+	cout << "' on Contains1ThenContains1" << endl;
+	cout << "result: " << Contains1ThenContains1->accepts(*test01) << endl;
+	cout << "input of '";
+	test07->print();
+	cout << "' on Contains1ThenContains1" << endl;
+	cout << "result: " << Contains1ThenContains1->accepts(*test07) << endl << endl << endl;
+
+	// testing with KSEnds0
+	cout << "input of '";
+	test4->print();
+	cout << "' on KSEnds0" << endl;
+	cout << "result: " << KSEnds0->accepts(*test4) << endl;
+	cout << "input of '";
+	test5->print();
+	cout << "' on KSEnds0" << endl;
+	cout << "result: " << KSEnds0->accepts(*test5) << endl;
+	cout << "input of '";
+	test06->print();
+	cout << "' on KSEnds0" << endl;
+	cout << "result: " << KSEnds0->accepts(*test06) << endl;
+	cout << "input of '";
+	test01->print();
+	cout << "' on KSEnds0" << endl;
+	cout << "result: " << KSEnds0->accepts(*test01) << endl;
+	cout << "input of '";
+	test07->print();
+	cout << "' on KSEnds0" << endl;
+	cout << "result: " << KSEnds0->accepts(*test07) << endl << endl << endl;
+
+	// testing with KSThirdEnd1
+	cout << "input of '";
+	test4->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test4) << endl;
+	cout << "input of '";
+	test5->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test5) << endl;
+	cout << "input of '";
+	test06->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test06) << endl;
+	cout << "input of '";
+	test01->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test01) << endl;
+	cout << "input of '";
+	test07->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test07) << endl;
+	cout << "input of '";
+	test08->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test08) << endl;
+	cout << "input of '";
+	test09->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test09) << endl;
+	cout << "input of '";
+	test11->print();
+	cout << "' on KSThirdEnd1" << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test11) << endl << endl << endl;
+
+
 	// Need to go back and complete:
-	// Concatonation of NFAs
 	// Kleene star function
 	// function to turn NFAs into DFAs
 
@@ -1960,10 +2042,10 @@ int main()
 	unionRegex* re7 = new unionRegex(re5, re6);
 	
 
-	// accepting: 1,3			rejecting: 2,4,5,6,7
+	// accepting: 1,3		rejecting: 2,4,5,6,7
 	OneString* reTest1 = new OneString(Char('A'), new OneString(Char('B'), new epsilon()));
 
-	// accepting: 1,3			rejecting: 2,4,5,6,7
+	// accepting: 1,3		rejecting: 2,4,5,6,7
 	OneString* reTest2 = new OneString(Char('A'), new OneString(Char('C'), new epsilon()));
 
 	// accepting: 3			rejecting: 1
@@ -1981,14 +2063,16 @@ int main()
 	// accepting: 4			rejecting: 1,2,3,5,6,7
 	OneString* reTest7 = new OneString(Char('H'), new OneString(Char('E'), new OneString(Char('L'), new OneString(Char('L'), new OneString(Char('O'), new epsilon())))));
 
-	// accepting: 5,7			rejecting: 1,2,3,4,6
+	// accepting: 5,7		rejecting: 1,2,3,4,6
 	OneString* reTest8 = new OneString(Char('0'), new epsilon());
 
-	// accepting: 5,7			rejecting: 1,2,3,4,6
+	// accepting: 5,7		rejecting: 1,2,3,4,6
 	OneString* reTest9 = new OneString(Char('1'), new epsilon());
 
-	// accepting: 6,7			rejecting: 1,2,3,4,5
+	// accepting: 6,7		rejecting: 1,2,3,4,5
 	OneString* reTest10 = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
+
+
 
 	cout << "Testing regular expressions:" << endl;
 	cout << "Examples of regular expressions:" << endl;
