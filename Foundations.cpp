@@ -688,25 +688,50 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 			vector<templ> temp = input1.Delta(qi.fromX, c);
 			vector<templ> temp2 = input2.Delta(qi.fromY, c);
 			bool acceptTemp = 0;
-			//cout << "c.c:" << c.c << " ";
+			//cout << endl << "c.c:" << c.c << " ";
 			//cout << "qi.fromX:" << qi.fromX << " ";
 			//cout << "qi.fromY:" << qi.fromY << " ";
-			// take all possible combinations of states from both delta transitions
-			for (templ x : temp) {
-				//cout << "|";
-				//cout << " " << x << " : ";
+			if (temp.size() == 0 && temp2.size() == 0) {
+				return ret;
+			}
+			else if (temp.size() == 0) {
 				for (templ y : temp2) {
-					//cout << " " << y << " ";
-					// remember if youre in an accepting state
-					if (input1.F(x) || input2.F(y)) {
+					if (input2.F(y)) {
 						acceptTemp = 1;
 					}
 					else acceptTemp = 0;
-					// make a union state out of the pair and add it to the returning vector
-					NFAUnionState<templ> ex(0, acceptTemp, x, y);
+					NFAUnionState<templ> ex(0, acceptTemp, state, y);
 					ret.push_back(ex);
 				}
-				//cout << "|";
+			}
+			else if (temp2.size() == 0) {
+				for (templ x : temp) {
+					if (input1.F(x)) {
+						acceptTemp = 1;
+					}
+					else acceptTemp = 0;
+					NFAUnionState<templ> ex(0, acceptTemp, x, state);
+					ret.push_back(ex);
+				}
+			}
+			else {
+				// take all possible combinations of states from both delta transitions
+				for (templ x : temp) {
+					//cout << "|";
+					for (templ y : temp2) {
+						//cout << " :" << x << " ";
+						//cout << "" << y << ": ";
+						// remember if youre in an accepting state
+						if (input1.F(x) || input2.F(y)) {
+							acceptTemp = 1;
+						}
+						else acceptTemp = 0;
+						// make a union state out of the pair and add it to the returning vector
+						NFAUnionState<templ> ex(0, acceptTemp, x, y);
+						ret.push_back(ex);
+					}
+					//cout << "|";
+				}
 			}
 			return ret;
 			},
@@ -1346,14 +1371,7 @@ int main()
 					}
 					else return veca;
 				}
-				//else return vec;
-				else if (qi == 'b') {
-					if (c.c == '0') {
-						return vecb;
-					}
-					else return veca;
-				}
-				else return veca;
+				else return vec;
 			},
 			[](char qi) {
 				vector<char> vec{};
@@ -1376,7 +1394,10 @@ int main()
 					}
 					else return vec;
 				}
-				return vecb;
+				else if (qi == 'b') {
+					return vecb;
+				}
+				else return vec;
 			},
 			[](char qi) {
 				vector<char> vec{};
@@ -1704,7 +1725,7 @@ int main()
 	cout << "input of '";
 	test04->print();
 	cout << "' on ends0" << endl;
-	cout << "result: " << ends0->accepts(*test04) << endl << endl;
+	cout << "result: " << ends0->accepts(*test04) << endl;
 	cout << "input of '";
 	test4->print();
 	cout << "' on ends0" << endl;
