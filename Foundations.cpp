@@ -655,31 +655,12 @@ public:
 template<class templ>
 class NFAUnionState {
 public:
-	/*pair<int, templ> p;
-	NFAUnionState() {};
-	NFAUnionState(int x, templ state) {
-		p.first = x;
-		p.second = state;
-	}
-	bool isStartState() {
-		if (p.first == 0) { return true; }
-		else return false;
-	}
-	bool fromX() {
-		if (p.first == 2) { return true; }
-		else return false;
-	}
-	bool fromY() {
-		if (p.first == 3) { return true; }
-		else return false;
-	}*/
 	bool isStartState;
 	bool isAcceptingState;
-	templ fromX;
-	templ fromY;
+	templ fromX;	// state when you're in the first NFA
+	templ fromY;	// state when you're in the second NFA
 
-	NFAUnionState() { 
-		cout << "why the hell am i here I should never reach this point in my code its just here to compile, thanks"; };
+	NFAUnionState() {};
 	NFAUnionState(bool isStartState, bool isAcceptingState, templ fromX, templ fromY) {
 		this->isStartState = isStartState;
 		this->isAcceptingState = isAcceptingState;
@@ -690,30 +671,33 @@ public:
 
 template<class templ>
 NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
-	templ state = '_';
-	return new NFA<NFAUnionState<templ>>([=](NFAUnionState<templ> qi) -> bool {
-		if (qi.isStartState || qi.isAcceptingState) {
-			return true;
-		}
-		else return(input1.Q(qi.fromX) || input2.Q(qi.fromY));
+		return new NFA<NFAUnionState<templ>>([=](NFAUnionState<templ> qi) -> bool {
+			return(qi.isStartState || input1.Q(qi.fromX) || input2.Q(qi.fromY));
 		},
+		// take the alphabet from the first NFA, they should be the same though
 		input1.v,
-			NFAUnionState<templ>(1, 0, state, state),
+			// start state for the union, epsilon transitions to start states of both
+			NFAUnionState<templ>(1, 0, input1.q0, input2.q0),// states could be anything
 			[=](NFAUnionState<templ> qi, Char c) {
 			vector<NFAUnionState<templ>> ret{};
+			// if you're in the start state, dont delta trans to anything
 			if (qi.isStartState) {
 				return ret;
 			}
-			vector<templ> temp = input1.Delta(qi.fromX, c);
-			vector<templ> temp2 = input2.Delta(qi.fromY, c);
+			vector<templ> temp = input1.Delta(qi.fromX, c.c);
+			vector<templ> temp2 = input2.Delta(qi.fromY, c.c);
 			bool acceptTemp = 0;
+			// take all possible combinations of states from both delta transitions
 			for (templ x : temp) {
 				for (templ y : temp2) {
+					// remember if youre in an accepting state
 					if (input1.F(x) || input2.F(y)) {
 						acceptTemp = 1;
 					}
 					else acceptTemp = 0;
+					// make a union state out of the pair and add it to the returning vector
 					NFAUnionState<templ> ex(0, acceptTemp, x, y);
+					cout << "hi"; // aojfawilrugvbskjvetkhg
 					ret.push_back(ex);
 				}
 			}
@@ -723,10 +707,12 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 			vector<NFAUnionState<templ>> ret{};
 			bool acceptTemp = 0;
 
+			// if you're in the start state, epsilon transition to the start states of both NFAs
 			if (qi.isStartState) {
 				if (input1.F(input1.q0) || input2.F(input2.q0)) {
 					acceptTemp = 1;
 				}
+				else acceptTemp = 0;
 				NFAUnionState<templ> ex(0, acceptTemp, input1.q0, input2.q0);
 				ret.push_back(ex);
 				return ret;
@@ -734,12 +720,14 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 
 			vector<templ> temp = input1.EDelta(qi.fromX);
 			vector<templ> temp2 = input2.EDelta(qi.fromY);
+			// take all possible combos of states created with epsilon trans of both NFAs
 			for (templ x : temp) {
 				for (templ y : temp2) {
 					if (input1.F(x) || input2.F(y)) {
 						acceptTemp = 1;
 					}
 					else acceptTemp = 0;
+					// make a union state out of the pair and add it to the returning vector
 					NFAUnionState<templ> ex(0, acceptTemp, x, y);
 					ret.push_back(ex);
 				}
@@ -1254,7 +1242,57 @@ int main()
 			},
 			[](char qi) { return qi == '1'; });
 
-	auto unionOfEndsIn0ANDThirdFromEndIsOne = UnionNFA(*endInZeroNFA, *thirdFromEnd1);
+	auto startsWithZero = 
+		new NFA<char>
+		([](int qi) { return qi == '0' || qi == '1'; },
+			binary,
+			'0',
+			[](char qi, Char c) {
+				vector<char> vec{};
+				vector<char> vec1{ '1' };
+				vector<char> vec0{ '0' };
+				if (qi == '0') {
+					if (c.c == '0') {
+						return vec1;
+					}
+					else return vec;
+				}
+				else return vec1;
+			},
+			[](char qi) {
+				vector<char> vec{};
+				return vec;
+			},
+				[](char qi) { return qi == '1'; });
+
+	auto containsZero =
+		new NFA<char>
+		([](int qi) { return qi == '0' || qi == '1'; },
+			binary,
+			'0',
+			[](char qi, Char c) {
+				vector<char> vec{};
+				vector<char> vec1{ '1' };
+				vector<char> vec0{ '0' };
+				vector<char> vec01{ '0', '1' };
+				if (qi == '0') {
+					if (c.c == '0') {
+						return vec01;
+					}
+					else return vec0;
+				}
+				else return vec01;
+			},
+			[](char qi) {
+				vector<char> vec{};
+				return vec;
+			},
+				[](char qi) { return qi == '1'; });
+
+
+	auto Ends0ANDThirdEnd1 = UnionNFA(*endInZeroNFA, *thirdFromEnd1);
+
+	auto Ends0ANDStarts0 = UnionNFA(*endInZeroNFA, *startsWithZero);
 
 	//************************End of NFA section********************//
 	//	0
@@ -1499,17 +1537,17 @@ int main()
 	cout << "input of '";
 	test01->print();
 	cout << "' on zero32" << endl;
-	cout << "result: " << zero32->accepts(*test01) << endl << endl;
+	cout << "result: " << zero32->accepts(*test01) << endl;
 
 	cout << "input of '";
 	test3->print();
 	cout << "' on zero32" << endl;
-	cout << "result: " << zero32->accepts(*test3) << endl << endl;
+	cout << "result: " << zero32->accepts(*test3) << endl;
 
 	cout << "input of '";
 	test02->print();
 	cout << "' on zero32" << endl;
-	cout << "result: " << zero32->accepts(*test02) << endl << endl;
+	cout << "result: " << zero32->accepts(*test02) << endl;
 
 	cout << "input of '";
 	zeroDfaTest->print();
@@ -1519,75 +1557,98 @@ int main()
 	cout << "input of '";
 	test01->print();
 	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts(*test01) << endl << endl;
+	cout << "result: " << endInZeroNFA->accepts(*test01) << endl;
 
 	cout << "input of '";
 	test02->print();
 	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts(*test02) << endl << endl;
+	cout << "result: " << endInZeroNFA->accepts(*test02) << endl;
 
 	cout << "input of '";
 	zeroDfaTest->print();
 	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl << endl;
+	cout << "result: " << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl;
 
 	cout << "input of '";
 	test5->print();
 	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts(*test5) << endl << endl;
+	cout << "result: " << endInZeroNFA->accepts(*test5) << endl;
+
+	cout << "input of '";
+	test04->print();
+	cout << "' on endInZeroNFA" << endl;
+	cout << "result: " << endInZeroNFA->accepts(*test04) << endl << endl;
 
 	cout << "input of '";
 	test02->print();
 	cout << "' on thirdFromEnd1" << endl;
-	cout << "result: " << thirdFromEnd1->accepts(*test02) << endl << endl;
+	cout << "result: " << thirdFromEnd1->accepts(*test02) << endl;
 
 	cout << "input of '";
 	test04->print();
 	cout << "' on thirdFromEnd1" << endl;
-	cout << "result: " << thirdFromEnd1->accepts(*test04) << endl << endl;
+	cout << "result: " << thirdFromEnd1->accepts(*test04) << endl;
 	
 	cout << "input of '";
 	test05->print();
 	cout << "' on thirdFromEnd1" << endl;
-	cout << "result: " << thirdFromEnd1->accepts(*test05) << endl << endl;
+	cout << "result: " << thirdFromEnd1->accepts(*test05) << endl;
 
 	cout << "input of '";
 	test5->print();
 	cout << "' on thirdFromEnd1" << endl;
 	cout << "result: " << thirdFromEnd1->accepts(*test5) << endl << endl;
 
-	// testing accepts on union NFA unionOfEndsIn0ANDThirdFromEndIsOne
-	cout << "Testing accepts function on union NFAs" << endl;
+	// startsWithZero
 	cout << "input of '";
-	test04->print();
-	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
-	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test04) << endl << endl;
+	test01->print();
+	cout << "' on startsWithZero" << endl;
+	cout << "result: " << startsWithZero->accepts(*test01) << endl;
+
+	cout << "input of '";
+	test3->print();
+	cout << "' on startsWithZero" << endl;
+	cout << "result: " << startsWithZero->accepts(*test3) << endl;
+
+	cout << "input of '";
+	test02->print();
+	cout << "' on startsWithZero" << endl;
+	cout << "result: " << startsWithZero->accepts(*test02) << endl;
+
+	cout << "input of '";
+	zeroDfaTest->print();
+	cout << "' on startsWithZero" << endl;
+	cout << "result: " << startsWithZero->accepts((OneString&)*zeroDfaTest) << endl << endl;
+
+	cout << "input of '";
+	test01->print();
+	cout << "' on containsZero" << endl;
+	cout << "result: " << containsZero->accepts(*test01) << endl;
+
+	cout << "input of '";
+	test3->print();
+	cout << "' on containsZero" << endl;
+	cout << "result: " << containsZero->accepts(*test3) << endl;
+
+	cout << "input of '";
+	test02->print();
+	cout << "' on containsZero" << endl;
+	cout << "result: " << containsZero->accepts(*test02) << endl;
+
+	cout << "input of '";
+	zeroDfaTest->print();
+	cout << "' on containsZero" << endl;
+	cout << "result: " << containsZero->accepts((OneString&)*zeroDfaTest) << endl;
 
 	cout << "input of '";
 	test5->print();
-	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
-	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test5) << endl << endl;
-
-	cout << "input of '";
-	test06->print();
-	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
-	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test06) << endl << endl;
+	cout << "' on containsZero" << endl;
+	cout << "result: " << containsZero->accepts(*test5) << endl;
 
 	cout << "input of '";
 	test4->print();
-	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
-	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test4) << endl << endl;
-
-	cout << "input of '";
-	test07->print();
-	cout << "' on unionOfEndsIn0ANDThirdFromEndIsOne" << endl;
-	cout << "result: " << unionOfEndsIn0ANDThirdFromEndIsOne->accepts(*test07) << endl << endl;
-
-	// Need to go back and complete:
-	// fix union function (wrong output value)
-	// Concatonation of NFAs
-	// Kleene star function
-	// function to turn NFAs into DFAs
+	cout << "' on containsZero" << endl;
+	cout << "result: " << containsZero->accepts(*test4) << endl << endl;
 
 	// Testing trace tree function for strings on NFAs
 	cout << "testing the trace tree function on NFAs:" << endl;
@@ -1602,6 +1663,65 @@ int main()
 	zero32->traceTree(test2);
 	cout << endl;
 
+
+	// testing accepts on union NFA Ends0ANDThirdEnd1
+	cout << "Testing accepts function on union NFAs" << endl;
+	cout << "input of '";
+	test04->print();
+	cout << "' on Ends0ANDThirdEnd1" << endl;
+	cout << "result: " << Ends0ANDThirdEnd1->accepts(*test04) << endl << endl;
+
+	cout << "input of '";
+	test5->print();
+	cout << "' on Ends0ANDThirdEnd1" << endl;
+	cout << "result: " << Ends0ANDThirdEnd1->accepts(*test5) << endl << endl;
+
+	cout << "input of '";
+	test06->print();
+	cout << "' on Ends0ANDThirdEnd1" << endl;
+	cout << "result: " << Ends0ANDThirdEnd1->accepts(*test06) << endl << endl;
+
+	cout << "input of '";
+	test4->print();
+	cout << "' on Ends0ANDThirdEnd1" << endl;
+	cout << "result: " << Ends0ANDThirdEnd1->accepts(*test4) << endl << endl;
+
+	cout << "input of '";
+	test07->print();
+	cout << "' on Ends0ANDThirdEnd1" << endl;
+	cout << "result: " << Ends0ANDThirdEnd1->accepts(*test07) << endl << endl << endl;
+
+	// testig with unionOfThirdFromEndIsOneANDZero32
+	cout << "input of '";
+	test04->print();
+	cout << "' on Ends0ANDStarts0" << endl;
+	cout << "result: " << Ends0ANDStarts0->accepts(*test04) << endl << endl;
+
+	cout << "input of '";
+	test5->print();
+	cout << "' on Ends0ANDStarts0" << endl;
+	cout << "result: " << Ends0ANDStarts0->accepts(*test5) << endl << endl;
+
+	cout << "input of '";
+	test06->print();
+	cout << "' on Ends0ANDStarts0" << endl;
+	cout << "result: " << Ends0ANDStarts0->accepts(*test06) << endl << endl;
+
+	cout << "input of '";
+	test01->print();
+	cout << "' on Ends0ANDStarts0" << endl;
+	cout << "result: " << Ends0ANDStarts0->accepts(*test01) << endl << endl;
+
+	cout << "input of '";
+	test07->print();
+	cout << "' on Ends0ANDStarts0" << endl;
+	cout << "result: " << Ends0ANDStarts0->accepts(*test07) << endl;
+
+
+	// Need to go back and complete:
+	// Concatonation of NFAs
+	// Kleene star function
+	// function to turn NFAs into DFAs
 
 	// Testing Regular expressions
 	//	A((B U C))*
