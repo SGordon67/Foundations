@@ -878,6 +878,59 @@ NFA<templ>* KleeneStar(NFA<templ> input) {
 		});
 }
 
+// Converts NFA -> DFA
+template <class State>
+DFA<vector<State>>* NFA2DFA(NFA<State> nfa)
+{
+	vector<State> startStates{ nfa.q0 };
+	vector<State> epsiFromStart = nfa.EDelta(nfa.q0);
+	startStates.insert(startStates.end(), epsiFromStart.begin(), epsiFromStart.end());
+
+	return new DFA<vector<State>>(
+		[=](vector<State> a) -> bool {
+			for (State x : a)
+			{
+				if (!nfa.Q(x))
+					return false;
+			}
+			return true; // all elements of input vector are valid nfa states
+		},
+		nfa.v, // uses same alphabet as given nfa
+			startStates,
+			[=](vector<State> a, Char b) -> vector<State> { // transition function
+			vector<State> tempVector;
+			vector<State> newStates;
+			vector<State> currentStates;
+			vector<State> epsilonStates;
+
+			for (State x : a) // check whether there are epsilon transitions from current state
+			{
+				tempVector = nfa.EDelta(x);
+				epsilonStates.insert(epsilonStates.end(), tempVector.begin(), tempVector.end());
+			}
+			currentStates.insert(currentStates.end(), epsilonStates.begin(), epsilonStates.end());
+			currentStates.insert(currentStates.end(), a.begin(), a.end());
+
+			for (State x : currentStates) // generate new sets of states from input char w/ each current state
+			{
+				tempVector = nfa.Delta(x, b);
+				newStates.insert(newStates.end(), tempVector.begin(), tempVector.end());
+			}
+			currentStates.clear();
+			currentStates.insert(currentStates.end(), newStates.begin(), newStates.end());
+
+			return currentStates; // return new state generated from the current state
+		},
+			[=](vector<State> a) -> bool {
+			for (State x : a)
+			{
+				if (nfa.F(x)) // make states in vector are all accepted by the original nfa
+					return true;
+			}
+			return false;
+		});
+}
+
 //***************************NFA END****************************//
 
 //***************************REG EXP****************************//
@@ -1429,6 +1482,7 @@ int main()
 			},
 				[](char qi) { return qi == 'b'; });
 
+	// union
 	auto Ends0ANDThirdEnd1 = UnionNFA(*ends0, *thirdFromEnd1);
 
 	auto Ends0ANDContains1 = UnionNFA(*ends0, *containsOne);
@@ -1437,16 +1491,18 @@ int main()
 	
 	auto Ends0ANDstarts0 = UnionNFA(*startsWithZero, *ends0);
 
-
+	// concatination
 	auto Ends0ThenContains1 = ConcatNFA(*ends0, *containsOne);
 
 	auto Contains1ThenContains1 = ConcatNFA(*containsOne, *containsOne);
 
-	// KleeneStar
+	// Kleene star
 	auto KSEnds0 = KleeneStar(*ends0);
 
 	auto KSThirdEnd1 = KleeneStar(*thirdFromEnd1);
 
+	// NFA -> DFA
+	auto ends0DFA = NFA2DFA(*ends0);
 
 	//************************End of NFA section********************//
 	//	0
@@ -1880,7 +1936,7 @@ int main()
 
 	// testing with Ends0ANDstarts0 
 	cout << "input of '";
-	test04->print();	// *******************************
+	test04->print();
 	cout << "' on Ends0ANDstarts0" << endl;
 	cout << "result: " << Ends0ANDstarts0->accepts(*test04) << endl;
 	cout << "input of '";
@@ -2004,9 +2060,16 @@ int main()
 	cout << "' on KSThirdEnd1" << endl;
 	cout << "result: " << KSThirdEnd1->accepts(*test11) << endl << endl << endl;
 
+	// ends0DFA
+	cout << "Testing NFA to DFA function. " << endl;
+	cout << "Testing input of: ";
+	test04->print();
+	cout << " with ends0 : " << endl;
+	cout << "NFA: " << ends0->accepts(*test04) << endl;
+	cout << "DFA: " << ends0DFA->accepts((String*)test04) << endl << endl;
 
+	//*********************************************************************************
 	// Need to go back and complete:
-	// Kleene star function
 	// function to turn NFAs into DFAs
 
 	// Testing Regular expressions
