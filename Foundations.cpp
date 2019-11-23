@@ -474,7 +474,7 @@ public:
 		this->F = in.F;
 	}
 
-	// Oracle function (task 27) doesnt work yet
+	// Oracle function (task 27)
 	bool valid(OneString inputString, TraceString traceString) {
 
 		OneString* in = &inputString;
@@ -671,21 +671,22 @@ public:
 
 template<class templ>
 NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
+	templ state = '_';
 		return new NFA<NFAUnionState<templ>>([=](NFAUnionState<templ> qi) -> bool {
 			return(qi.isStartState || input1.Q(qi.fromX) || input2.Q(qi.fromY));
 		},
 		// take the alphabet from the first NFA, they should be the same though
 		input1.v,
 			// start state for the union, epsilon transitions to start states of both
-			NFAUnionState<templ>(1, 0, input1.q0, input2.q0),// states could be anything
+			NFAUnionState<templ>(1, 0, state, state),// states could be anything
 			[=](NFAUnionState<templ> qi, Char c) {
 			vector<NFAUnionState<templ>> ret{};
 			// if you're in the start state, dont delta trans to anything
 			if (qi.isStartState) {
 				return ret;
 			}
-			vector<templ> temp = input1.Delta(qi.fromX, c.c);
-			vector<templ> temp2 = input2.Delta(qi.fromY, c.c);
+			vector<templ> temp = input1.Delta(qi.fromX, c);
+			vector<templ> temp2 = input2.Delta(qi.fromY, c);
 			bool acceptTemp = 0;
 			//cout << "c.c:" << c.c << " ";
 			//cout << "qi.fromX:" << qi.fromX << " ";
@@ -745,6 +746,79 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 		});
 }
 
+template<class templ>
+class NFAConcatState {
+public:
+	bool isFromX;
+	bool isFromY;
+	templ fromX;	// state when you're in the first NFA
+	templ fromY;	// state when you're in the second NFA
+
+	NFAConcatState() {};
+	NFAConcatState(bool isFromX, bool isFromY, templ fromX, templ fromY) {
+		this->isFromX = isFromX;
+		this->isFromY = isFromY;
+		this->fromX = fromX;
+		this->fromY = fromY;
+	}
+};
+
+template<class templ>
+NFA<NFAConcatState<templ>>* ConcatNFA(NFA<templ> input1, NFA<templ> input2) {
+	templ state = '_';
+	return new NFA<NFAConcatState<templ>>(
+		[=](NFAConcatState<templ> qi) -> bool {
+		return(input1.Q(qi.fromX) || input2.Q(qi.fromY));
+		},
+		input1.v,
+			NFAConcatState<templ>(1, 0, input1.q0, state)
+			,
+			[=](NFAConcatState<templ> qi, Char c) {
+				vector<NFAConcatState<templ>> ret{};
+				vector<templ> temp{};
+				if (qi.isFromX) {
+					temp = input1.Delta(qi.fromX, c);
+					for (templ x : temp) {
+						NFAConcatState<templ> ex = NFAConcatState<templ>(1, 0, x, state);
+						ret.push_back(ex);
+					}
+				}
+				else if (qi.isFromY) {
+					temp = input2.Delta(qi.fromY, c);
+					for (templ x : temp) {
+						NFAConcatState<templ> ex = NFAConcatState<templ>(0, 1, state, x);
+						ret.push_back(ex);
+					}
+				}
+				return ret;
+			},
+			[=](NFAConcatState<templ> qi) {
+				vector<NFAConcatState<templ>> ret{};
+				vector<templ> temp{};
+				if (qi.isFromX) {
+					if (input1.F(qi.fromX)) {
+						NFAConcatState<templ> swap = NFAConcatState<templ>(0, 1, state, input2.q0);
+						ret.push_back(swap);
+					}
+					temp = input1.EDelta(qi.fromX);
+					for (templ x : temp) {
+						NFAConcatState<templ> ex = NFAConcatState<templ>(1, 0, x, state);
+						ret.push_back(ex);
+					}
+				}
+				else if (qi.isFromY) {
+					temp = input2.EDelta(qi.fromY);
+					for (templ x : temp) {
+						NFAConcatState<templ> ex = NFAConcatState<templ>(1, 0, state, x);
+						ret.push_back(ex);
+					}
+				}
+				return ret;
+			},
+			[=](NFAConcatState<templ> qi) {
+				return input2.F(qi.fromY);
+			});
+}
 //***************************NFA END****************************//
 
 //***************************REG EXP****************************//
@@ -1222,7 +1296,7 @@ int main()
 			[](char qi) { return qi == 'b' || qi == 'd'; });
 
 	// ends in a 0
-	auto endInZeroNFA =
+	auto ends0 =
 		new NFA<char>
 		([](int qi) { return qi == 'a' || qi == 'b'; },
 			binary,
@@ -1243,7 +1317,7 @@ int main()
 				else return vec;
 			},
 			[](char qi) {
-				vector<char> vec{'a'};
+				vector<char> vec{};
 				return vec;
 			},
 			[](char qi) { return qi == 'b'; });
@@ -1319,13 +1393,16 @@ int main()
 			},
 				[](char qi) { return qi == 'b'; });
 
-	auto Ends0ANDThirdEnd1 = UnionNFA(*endInZeroNFA, *thirdFromEnd1);
+	auto Ends0ANDThirdEnd1 = UnionNFA(*ends0, *thirdFromEnd1);
 
-	auto Ends0ANDContains1 = UnionNFA(*endInZeroNFA, *containsOne);
+	auto Ends0ANDContains1 = UnionNFA(*ends0, *containsOne);
 
 	auto Contains1ANDThirdEnd1 = UnionNFA(*containsOne, *thirdFromEnd1);
 	
-	auto Ends0ANDstarts0 = UnionNFA(*startsWithZero, *endInZeroNFA);
+	auto Ends0ANDstarts0 = UnionNFA(*startsWithZero, *ends0);
+
+
+	auto Ends0ThenContains1 = ConcatNFA(*ends0, *containsOne);
 
 	//************************End of NFA section********************//
 	//	0
@@ -1506,6 +1583,7 @@ int main()
 	evenL->trace(*test7);		// States 0-1-0
 	cout << endl << endl;
 
+
 	/*trace of a union shows each trace
 	individually, but also vertically next to eachother
 	in this case:
@@ -1580,24 +1658,28 @@ int main()
 
 	cout << "input of '";
 	test01->print();
-	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts(*test01) << endl;
+	cout << "' on ends0" << endl;
+	cout << "result: " << ends0->accepts(*test01) << endl;
 	cout << "input of '";
 	test02->print();
-	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts(*test02) << endl;
+	cout << "' on ends0" << endl;
+	cout << "result: " << ends0->accepts(*test02) << endl;
 	cout << "input of '";
 	zeroDfaTest->print();
-	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts((OneString&)*zeroDfaTest) << endl;
+	cout << "' on ends0" << endl;
+	cout << "result: " << ends0->accepts((OneString&)*zeroDfaTest) << endl;
 	cout << "input of '";
 	test5->print();
-	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts(*test5) << endl;
+	cout << "' on ends0" << endl;
+	cout << "result: " << ends0->accepts(*test5) << endl;
 	cout << "input of '";
 	test04->print();
-	cout << "' on endInZeroNFA" << endl;
-	cout << "result: " << endInZeroNFA->accepts(*test04) << endl << endl;
+	cout << "' on ends0" << endl;
+	cout << "result: " << ends0->accepts(*test04) << endl << endl;
+	cout << "input of '";
+	test4->print();
+	cout << "' on ends0" << endl;
+	cout << "result: " << ends0->accepts(*test4) << endl << endl;
 
 	cout << "input of '";
 	test02->print();
@@ -1773,9 +1855,9 @@ int main()
 
 	// testing with Ends0ANDstarts0
 	cout << "input of '";
-	test04->print();
+	test4->print();
 	cout << "' on Ends0ANDstarts0" << endl;
-	cout << "result: " << Ends0ANDstarts0->accepts(*test04) << endl;
+	cout << "result: " << Ends0ANDstarts0->accepts(*test4) << endl;
 	cout << "input of '";
 	test5->print();
 	cout << "' on Ends0ANDstarts0" << endl;
@@ -1795,7 +1877,29 @@ int main()
 	cout << "input of '";
 	test3->print();
 	cout << "' on Ends0ANDstarts0" << endl;
-	cout << "result: " << Ends0ANDstarts0->accepts(*test3) << endl << endl;
+	cout << "result: " << Ends0ANDstarts0->accepts(*test3) << endl << endl << endl;
+
+	// testing with Ends0ThenContains1
+	cout << "input of '";
+	test4->print();
+	cout << "' on Ends0ThenContains1" << endl;
+	cout << "result: " << Ends0ThenContains1->accepts(*test4) << endl;
+	cout << "input of '";
+	test5->print();
+	cout << "' on Ends0ThenContains1" << endl;
+	cout << "result: " << Ends0ThenContains1->accepts(*test5) << endl;
+	cout << "input of '";
+	test06->print();
+	cout << "' on Ends0ThenContains1" << endl;
+	cout << "result: " << Ends0ThenContains1->accepts(*test06) << endl;
+	cout << "input of '";
+	test01->print();
+	cout << "' on Ends0ThenContains1" << endl;
+	cout << "result: " << Ends0ThenContains1->accepts(*test01) << endl;
+	cout << "input of '";
+	test07->print();
+	cout << "' on Ends0ThenContains1" << endl;
+	cout << "result: " << Ends0ThenContains1->accepts(*test07) << endl << endl << endl;
 
 	// Need to go back and complete:
 	// Concatonation of NFAs
