@@ -1092,29 +1092,103 @@ OneString* generator(regex* input) {
 	return ((OneString*) input->generate());
 }
 
+// function header so I can reference it before it's defined
+template <class templ>
+NFA<templ>* Regex2NFA(regex* input);
+
+// functions to convert each type of regex into an NFA
 template <class templ>
 NFA<templ>* epNFAConv(regex* input) {
-
+	vector<Char> alph{Char('0'), Char('1')};
+	return new NFA<templ>(
+		[=](templ qi) -> bool {
+			return (qi == 'a' || qi == 'b');
+		},
+		alph
+		,
+		'a'
+		,
+			[=](templ qi, Char c) {
+			vector<templ> ret{};
+			return ret;
+			},
+			[=](templ qi) {
+				vector<templ> ret{};
+				vector<templ> retb{ 'b' };
+				if (qi == 'a') {
+					return retb;
+				}
+				else return ret;
+			},
+			[=](templ qi) {
+				return (qi == 'b');
+		});
 }
 template <class templ>
 NFA<templ>* mtNFAConv(regex* input) {
-
+	vector<Char> alph{ Char('0'), Char('1') };
+	return new NFA<templ>(
+		[=](templ qi) -> bool {
+			return (qi == 'a');
+		},
+		alph
+			,
+			'a'
+			,
+			[=](templ qi, Char c) {
+			vector<templ> ret{};
+			return ret;
+		},
+			[=](templ qi) {
+			vector<templ> ret{};
+			return ret;
+		},
+			[=](templ qi) {
+			return (false);
+		});
 }
 template <class templ>
 NFA<templ>* chNFAConv(regex* input) {
-
+	charRegex* actual = (charRegex*)input;
+	vector<Char> alph{ Char('0'), Char('1') };
+	return new NFA<templ>(
+		[=](templ qi) -> bool {
+			return (qi == 'a' || qi == 'b');
+		},
+		alph
+			,
+			'a'
+			,
+			[=](templ qi, Char c) {
+			vector<templ> ret{};
+			vector<templ> reta{ 'a' };
+			vector<templ> retb{ 'b' };
+			if (qi == 'a') {
+				if (c.c == actual->c.c) {
+					return retb;
+				}
+			}
+			else return ret;
+		},
+			[=](templ qi) {
+			vector<templ> ret{};
+			return ret;
+		},
+			[=](templ qi) {
+			return (qi == 'b');
+		});
 }
 template <class templ>
-NFA<templ>* unNFAConv(regex* input) {
-
+NFA<NFAUnionState<templ, templ>>* unNFAConv(regex* input) {
+	return UnionNFA(Regex2NFA<templ>(((unionRegex*)input)->left), Regex2NFA<templ>(((unionRegex*)input)->right));
 }
 template <class templ>
-NFA<templ>* coNFAConv(regex* input) {
-
+NFA<NFAConcatState<templ, templ>>* coNFAConv(regex* input) {
+	return ConcatNFA(Regex2NFA<templ>(((concatRegex*)input)->left), Regex2NFA<templ>(((concatRegex*)input)->right));
 }
 template <class templ>
 NFA<templ>* stNFAConv(regex* input) {
-
+	return KleeneStar(Regex2NFA<templ>(((starRegex*)input)->r));
 }
 
 template <class templ>
@@ -2340,4 +2414,8 @@ int main()
 	OneString* gen7 = re7->generate();
 	gen7->print();
 	cout << endl;
+
+	// converting and testing turning a regex into an NFA
+
+	//auto regNFA1 = Regex2NFA<char>(re6);
 }
