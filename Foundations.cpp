@@ -652,7 +652,7 @@ public:
 
 };
 
-template<class templ>
+template<class templ, class templ2>
 class NFAUnionState {
 public:
 	bool isStartState;
@@ -661,7 +661,7 @@ public:
 	templ fromY;	// state when you're in the second NFA
 
 	NFAUnionState() {};
-	NFAUnionState(bool isStartState, bool isAcceptingState, templ fromX, templ fromY) {
+	NFAUnionState(bool isStartState, bool isAcceptingState, templ fromX, templ2 fromY) {
 		this->isStartState = isStartState;
 		this->isAcceptingState = isAcceptingState;
 		this->fromX = fromX;
@@ -669,24 +669,24 @@ public:
 	}
 };
 
-template<class templ>
-NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
+template<class templ, class templ2>
+NFA<NFAUnionState<templ, templ2>>* UnionNFA(NFA<templ> input1, NFA<templ2> input2) {
 	templ state = '_';
-		return new NFA<NFAUnionState<templ>>([=](NFAUnionState<templ> qi) -> bool {
+		return new NFA<NFAUnionState<templ, templ2>>([=](NFAUnionState<templ, templ2> qi) -> bool {
 			return(qi.isStartState || input1.Q(qi.fromX) || input2.Q(qi.fromY));
 		},
 		// take the alphabet from the first NFA, they should be the same though
 		input1.v,
 			// start state for the union, epsilon transitions to start states of both
-			NFAUnionState<templ>(1, 0, state, state),// states could be anything
-			[=](NFAUnionState<templ> qi, Char c) {
-			vector<NFAUnionState<templ>> ret{};
+			NFAUnionState<templ, templ2>(1, 0, state, state),// states could be anything
+			[=](NFAUnionState<templ, templ2> qi, Char c) {
+			vector<NFAUnionState<templ, templ2>> ret{};
 			// if you're in the start state, dont delta trans to anything
 			if (qi.isStartState) {
 				return ret;
 			}
 			vector<templ> temp = input1.Delta(qi.fromX, c);
-			vector<templ> temp2 = input2.Delta(qi.fromY, c);
+			vector<templ2> temp2 = input2.Delta(qi.fromY, c);
 			bool acceptTemp = 0;
 			//cout << endl << "c.c:" << c.c << " ";
 			//cout << "qi.fromX:" << qi.fromX << " ";
@@ -700,7 +700,7 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 						acceptTemp = 1;
 					}
 					else acceptTemp = 0;
-					NFAUnionState<templ> ex(0, acceptTemp, state, y);
+					NFAUnionState<templ, templ2> ex(0, acceptTemp, state, y);
 					ret.push_back(ex);
 				}
 			}
@@ -710,7 +710,7 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 						acceptTemp = 1;
 					}
 					else acceptTemp = 0;
-					NFAUnionState<templ> ex(0, acceptTemp, x, state);
+					NFAUnionState<templ, templ2> ex(0, acceptTemp, x, state);
 					ret.push_back(ex);
 				}
 			}
@@ -727,7 +727,7 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 						}
 						else acceptTemp = 0;
 						// make a union state out of the pair and add it to the returning vector
-						NFAUnionState<templ> ex(0, acceptTemp, x, y);
+						NFAUnionState<templ, templ2> ex(0, acceptTemp, x, y);
 						ret.push_back(ex);
 					}
 					//cout << "|";
@@ -735,8 +735,8 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 			}
 			return ret;
 			},
-			[=](NFAUnionState<templ> qi) {
-			vector<NFAUnionState<templ>> ret{};
+			[=](NFAUnionState<templ, templ2> qi) {
+			vector<NFAUnionState<templ, templ2>> ret{};
 			bool acceptTemp = 0;
 
 			// if you're in the start state, epsilon transition to the start states of both NFAs
@@ -745,7 +745,7 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 					acceptTemp = 1;
 				}
 				else acceptTemp = 0;
-				NFAUnionState<templ> ex(0, acceptTemp, input1.q0, input2.q0);
+				NFAUnionState<templ, templ2> ex(0, acceptTemp, input1.q0, input2.q0);
 				ret.push_back(ex);
 			}
 			else {
@@ -759,28 +759,28 @@ NFA<NFAUnionState<templ>>* UnionNFA(NFA<templ> input1, NFA<templ> input2) {
 						}
 						else acceptTemp = 0;
 						// make a union state out of the pair and add it to the returning vector
-						NFAUnionState<templ> ex(0, acceptTemp, x, y);
+						NFAUnionState<templ, templ2> ex(0, acceptTemp, x, y);
 						ret.push_back(ex);
 					}
 				}
 			}
 			return ret;
 		},
-		[=](NFAUnionState<templ> qi) {
+		[=](NFAUnionState<templ, templ2> qi) {
 			return (input1.F(qi.fromX) || input2.F(qi.fromY));
 		});
 }
 
-template<class templ>
+template<class templ, class templ2>
 class NFAConcatState {
 public:
 	bool isFromX;
 	bool isFromY;
 	templ fromX;	// state when you're in the first NFA
-	templ fromY;	// state when you're in the second NFA
+	templ2 fromY;	// state when you're in the second NFA
 
 	NFAConcatState() {};
-	NFAConcatState(bool isFromX, bool isFromY, templ fromX, templ fromY) {
+	NFAConcatState(bool isFromX, bool isFromY, templ fromX, templ2 fromY) {
 		this->isFromX = isFromX;
 		this->isFromY = isFromY;
 		this->fromX = fromX;
@@ -788,59 +788,59 @@ public:
 	}
 };
 
-template<class templ>
-NFA<NFAConcatState<templ>>* ConcatNFA(NFA<templ> input1, NFA<templ> input2) {
+template<class templ, class templ2>
+NFA<NFAConcatState<templ, templ2>>* ConcatNFA(NFA<templ> input1, NFA<templ2> input2) {
 	templ state = '_';
-	return new NFA<NFAConcatState<templ>>(
-		[=](NFAConcatState<templ> qi) -> bool {
+	return new NFA<NFAConcatState<templ, templ2>>(
+		[=](NFAConcatState<templ, templ2> qi) -> bool {
 		return(input1.Q(qi.fromX) || input2.Q(qi.fromY));
 		},
 		input1.v,
-			NFAConcatState<templ>(1, 0, input1.q0, state)
+			NFAConcatState<templ, templ2>(1, 0, input1.q0, state)
 			,
-			[=](NFAConcatState<templ> qi, Char c) {
-				vector<NFAConcatState<templ>> ret{};
+			[=](NFAConcatState<templ, templ2> qi, Char c) {
+				vector<NFAConcatState<templ, templ2>> ret{};
 				vector<templ> temp{};
 				if (qi.isFromX) {
 					temp = input1.Delta(qi.fromX, c);
 					for (templ x : temp) {
-						NFAConcatState<templ> ex = NFAConcatState<templ>(1, 0, x, state);
+						NFAConcatState<templ, templ2> ex = NFAConcatState<templ, templ2>(1, 0, x, state);
 						ret.push_back(ex);
 					}
 				}
 				else if (qi.isFromY) {
 					temp = input2.Delta(qi.fromY, c);
 					for (templ x : temp) {
-						NFAConcatState<templ> ex = NFAConcatState<templ>(0, 1, state, x);
+						NFAConcatState<templ, templ2> ex = NFAConcatState<templ, templ2>(0, 1, state, x);
 						ret.push_back(ex);
 					}
 				}
 				return ret;
 			},
-			[=](NFAConcatState<templ> qi) {
-				vector<NFAConcatState<templ>> ret{};
+			[=](NFAConcatState<templ, templ2> qi) {
+				vector<NFAConcatState<templ, templ2>> ret{};
 				vector<templ> temp{};
 				if (qi.isFromX) {
 					if (input1.F(qi.fromX)) {
-						NFAConcatState<templ> swap = NFAConcatState<templ>(0, 1, state, input2.q0);
+						NFAConcatState<templ, templ2> swap = NFAConcatState<templ, templ2>(0, 1, state, input2.q0);
 						ret.push_back(swap);
 					}
 					temp = input1.EDelta(qi.fromX);
 					for (templ x : temp) {
-						NFAConcatState<templ> ex = NFAConcatState<templ>(1, 0, x, state);
+						NFAConcatState<templ, templ2> ex = NFAConcatState<templ, templ2>(1, 0, x, state);
 						ret.push_back(ex);
 					}
 				}
 				else if (qi.isFromY) {
 					temp = input2.EDelta(qi.fromY);
 					for (templ x : temp) {
-						NFAConcatState<templ> ex = NFAConcatState<templ>(1, 0, state, x);
+						NFAConcatState<templ, templ2> ex = NFAConcatState<templ, templ2>(1, 0, state, x);
 						ret.push_back(ex);
 					}
 				}
 				return ret;
 			},
-			[=](NFAConcatState<templ> qi) {
+			[=](NFAConcatState<templ, templ2> qi) {
 				return input2.F(qi.fromY);
 			});
 }
@@ -1091,6 +1091,56 @@ public:
 OneString* generator(regex* input) {
 	return ((OneString*) input->generate());
 }
+
+template <class templ>
+NFA<templ>* epNFAConv(regex* input) {
+
+}
+template <class templ>
+NFA<templ>* mtNFAConv(regex* input) {
+
+}
+template <class templ>
+NFA<templ>* chNFAConv(regex* input) {
+
+}
+template <class templ>
+NFA<templ>* unNFAConv(regex* input) {
+
+}
+template <class templ>
+NFA<templ>* coNFAConv(regex* input) {
+
+}
+template <class templ>
+NFA<templ>* stNFAConv(regex* input) {
+
+}
+
+template <class templ>
+NFA<templ>* Regex2NFA(regex* input) {
+	if (input->isEpsRegex) {
+		return (epNFAConv<templ>(input));
+	}
+	else if (input->isMtRegex) {
+		return (mtNFAConv<templ>(input));
+	}
+	else if (input->isCharRegex) {
+		return (chNFAConv<templ>(input));
+	}
+	else if (input->isUnionRegex) {
+		return (unNFAConv<templ>(input));
+	}
+	else if (input->isConcatRegex) {
+		return (coNFAConv<templ>(input));
+	}
+	else if (input->isStarRegex) {
+		return (stNFAConv<templ>(input));
+	}
+}
+
+
+
 //***************************REG END****************************//
 
 int main()
@@ -1503,6 +1553,8 @@ int main()
 
 	// NFA -> DFA
 	auto ends0DFA = NFA2DFA(*ends0);
+
+	auto thirdEnd1DFA = NFA2DFA(*thirdFromEnd1);
 
 	//************************End of NFA section********************//
 	//	0
@@ -2063,11 +2115,80 @@ int main()
 	// ends0DFA
 	cout << "Testing NFA to DFA function. " << endl;
 	cout << "Testing input of: ";
+	test01->print();
+	cout << " with ends0 : " << endl;
+	cout << "NFA: " << ends0->accepts(*test01) << endl;
+	cout << "DFA: " << ends0DFA->accepts((String*)test01) << endl;
+	cout << "Testing input of: ";
+	test02->print();
+	cout << " with ends0 : " << endl;
+	cout << "NFA: " << ends0->accepts(*test02) << endl;
+	cout << "DFA: " << ends0DFA->accepts((String*)test02) << endl;
+	cout << "Testing input of: ";
+	zeroDfaTest->print();
+	cout << " with ends0 : " << endl;
+	cout << "NFA: " << ends0->accepts((OneString&)*zeroDfaTest) << endl;
+	cout << "DFA: " << ends0DFA->accepts((String*)zeroDfaTest) << endl;
+	cout << "Testing input of: ";
+	test5->print();
+	cout << " with ends0 : " << endl;
+	cout << "NFA: " << ends0->accepts(*test5) << endl;
+	cout << "DFA: " << ends0DFA->accepts((String*)test5) << endl;
+	cout << "Testing input of: ";
 	test04->print();
 	cout << " with ends0 : " << endl;
 	cout << "NFA: " << ends0->accepts(*test04) << endl;
-	cout << "DFA: " << ends0DFA->accepts((String*)test04) << endl << endl;
+	cout << "DFA: " << ends0DFA->accepts((String*)test04) << endl;
+	cout << "Testing input of: ";
+	test4->print();
+	cout << " with ends0 : " << endl;
+	cout << "NFA: " << ends0->accepts(*test4) << endl;
+	cout << "DFA: " << ends0DFA->accepts((String*)test4) << endl << endl;
+	
+	// thirdEnd1DFA
+	cout << "Testing NFA to DFA function. " << endl;
+	cout << "Testing input of: ";
+	test5->print();
+	cout << " with thirdFromEnd1 : " << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test5) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test5) << endl;
+	cout << "Testing input of: ";
+	test06->print();
+	cout << " with thirdFromEnd1 : " << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test06) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test06) << endl;
+	cout << "Testing input of: ";
+	test01->print();
+	cout << " with thirdFromEnd1 : " << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test01) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test01) << endl;
+	cout << "Testing input of: ";
+	test07->print();
+	cout << " with thirdFromEnd1 : " << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test07) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test07) << endl;
+	cout << "Testing input of: ";
+	test08->print();
+	cout << " with thirdFromEnd1 : " << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test08) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test08) << endl;
+	cout << "Testing input of: ";
+	test09->print();
+	cout << " with thirdFromEnd1 : " << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test09) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test09) << endl;
+	cout << "Testing input of: ";
+	test11->print();
+	cout << " with thirdFromEnd1 : " << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test11) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test11) << endl << endl;
 
+
+	cout << "testing equality of 2 DFAs" << endl;
+	bool example1 = equalityDFA(thirdEnd1DFA, ends0DFA);
+	bool example2 = equalityDFA(thirdEnd1DFA, thirdEnd1DFA);
+	cout << "thirdEnd1DFA equal to ends0DFA: " << example1 << endl;
+	cout << "thirdEnd1DFA equal to thirdEnd1DFA: " << example2 << endl << endl;
 	//*********************************************************************************
 	// Need to go back and complete:
 	// function to turn NFAs into DFAs
@@ -2157,7 +2278,6 @@ int main()
 	OneString* reTest10 = new OneString(Char('0'), new OneString(Char('1'), new epsilon()));
 
 
-
 	cout << "Testing regular expressions:" << endl;
 	cout << "Examples of regular expressions:" << endl;
 	re1->print();
@@ -2177,23 +2297,45 @@ int main()
 
 
 	// testing generator
+	cout << endl << "Testing generator function for each regex:" << endl;
+	cout << "Testing with: ";
+	re1->print();
+	cout << endl;
 	OneString* gen1 = re1->generate();
 	gen1->print();
+	cout << endl;
+	cout << "Testing with: ";
+	re2->print();
 	cout << endl;
 	OneString* gen2 = re2->generate();
 	gen2->print();
 	cout << endl;
+	cout << "Testing with: ";
+	re3->print();
+	cout << endl;
 	OneString* gen3 = re3->generate();
 	gen3->print();
+	cout << endl;
+	cout << "Testing with: ";
+	re4->print();
 	cout << endl;
 	OneString* gen4 = re4->generate();
 	gen4->print();
 	cout << endl;
+	cout << "Testing with: ";
+	re5->print();
+	cout << endl;
 	OneString* gen5 = re5->generate();
 	gen5->print();
 	cout << endl;
+	cout << "Testing with: ";
+	re6->print();
+	cout << endl;
 	OneString* gen6 = re6->generate();
 	gen6->print();
+	cout << endl;
+	cout << "Testing with: ";
+	re7->print();
 	cout << endl;
 	OneString* gen7 = re7->generate();
 	gen7->print();
