@@ -1097,131 +1097,138 @@ OneString* generator(regex* input) {
 }
 
 // function header so I can reference it before it's defined
-template <class templ>
-NFA<templ>* RegexToNFA(regex* input);
+NFA<char>* RegexToNFA(regex* input, char &offset);
 
 // functions to convert each type of regex into an NFA
-template <class templ>
-NFA<templ>* epNFAConv(regex* input) {
-	vector<Char> alph{Char('0'), Char('1')};
-	return new NFA<templ>(
-		[=](templ qi) -> bool {
-			return (qi == 'a' || qi == 'b');
+NFA<char>* epNFAConv(regex* input, char &offset) {
+	offset++;
+	char off1 = offset;
+	offset++;
+	char off2 = offset;
+	vector<Char> alph{Char(off1), Char(off2)};
+	return new NFA<char>(
+		[=](char qi) -> bool {
+			return (qi == off1 || qi == off2);
 		},
-		alph
-		,
-		'a'
-		,
-			[=](templ qi, Char c) {
-			vector<templ> ret{};
+		alph,
+		off1,
+			[=](char qi, Char c) {
+			vector<char> ret{};
 			return ret;
 			},
-			[=](templ qi) {
-				vector<templ> ret{};
-				vector<templ> retb{ 'b' };
-				if (qi == 'a') {
+			[=](char qi) {
+				vector<char> ret{};
+				vector<char> retb{ off2 };
+				if (qi == off1) {
 					return retb;
 				}
 				else return ret;
 			},
-			[=](templ qi) {
-				return (qi == 'b');
+			[=](char qi) {
+				return (qi == off2);
 		});
 }
-template <class templ>
-NFA<templ>* mtNFAConv(regex* input) {
-	vector<Char> alph{ Char('0'), Char('1') };
-	return new NFA<templ>(
-		[=](templ qi) -> bool {
-			return (qi == 'a');
+NFA<char>* mtNFAConv(regex* input, char &offset) {
+	offset++;
+	char off1 = offset;
+	offset++;
+	char off2 = offset;
+	vector<Char> alph{ Char(off1), Char(off2) };
+	return new NFA<char>(
+		[=](char qi) -> bool {
+			return (qi == off1);
 		},
-		alph
-			,
-			'a'
-			,
-			[=](templ qi, Char c) {
-			vector<templ> ret{};
+		alph,
+			off1,
+			[=](char qi, Char c) {
+			vector<char> ret{};
 			return ret;
 		},
-			[=](templ qi) {
-			vector<templ> ret{};
+			[=](char qi) {
+			vector<char> ret{};
 			return ret;
 		},
-			[=](templ qi) {
+			[=](char qi) {
 			return (false);
 		});
 }
-template <class templ>
-NFA<templ>* chNFAConv(regex* input) {
+NFA<char>* chNFAConv(regex* input, char &offset) {
+	offset++;
+	char off1 = offset;
+	offset++;
+	char off2 = offset;
 	charRegex* actual = (charRegex*)input;
-	vector<Char> alph{ Char('0'), Char('1') };
-	return new NFA<templ>(
-		[=](templ qi) -> bool {
-			return (qi == 'a' || qi == 'b');
+	vector<Char> alph{ Char(off1), Char(off2) };
+	return new NFA<char>(
+		[=](char qi) -> bool {
+			return (qi == off1 || qi == off2);
 		},
 		alph
 			,
-			'a'
+			off1
 			,
-			[=](templ qi, Char c) {
-			vector<templ> ret{};
-			vector<templ> reta{ 'a' };
-			vector<templ> retb{ 'b' };
-			if (qi == 'a') {
+			[=](char qi, Char c) {
+			vector<char> ret{};
+			vector<char> reta{ off1 };
+			vector<char> retb{ off2 };
+			if (qi == off1) {
 				if (c.c == actual->c.c) {
 					return retb;
 				}
 			}
 			else return ret;
 		},
-			[=](templ qi) {
-			vector<templ> ret{};
+			[=](char qi) {
+			vector<char> ret{};
 			return ret;
 		},
-			[=](templ qi) {
-			return (qi == 'b');
+			[=](char qi) {
+			return (qi == off2);
 		});
 }
-template <class templ, class templ2>
-NFA<NFAUnionState<templ, templ>>* unNFAConv(regex* input) {
+NFA<char>* unNFAConv(regex* input, char &offset) {
+
+	/*
 	unionRegex* actual = (unionRegex*)input;
 	NFA<templ> leftNFA = RegexToNFA<templ>(actual->left);
 	NFA<templ2> rightNFA = RegexToNFA<templ2>(actual->right);
 	return UnionNFA(leftNFA, rightNFA);
+	*/
+	return false;
 }
-template <class templ, class templ2>
-NFA<NFAConcatState<templ, templ2>>* coNFAConv(regex* input) {
+NFA<char>* coNFAConv(regex* input, char &offset) {
+	/*
 	concatRegex* actual = (concatRegex*)input;
 	NFA<templ> leftNFA = RegexToNFA<templ>(actual->left);
 	NFA<templ2> rightNFA = RegexToNFA<templ2>(actual->right);
 	return ConcatNFA(leftNFA, rightNFA);
+	*/
+	return false;
 }
-template <class templ>
-NFA<templ>* stNFAConv(regex* input) {
+NFA<char>* stNFAConv(regex* input, char &offset){
 	starRegex* actual = (starRegex*)input;
-	NFA<templ>* next = RegexToNFA<templ>(actual);
+	NFA<char>* next = RegexToNFA(actual, offset);
 	return KleeneStar(*next);
 }
 
-template <class templ>
-NFA<templ>* RegexToNFA(regex* input) {
+NFA<char>* RegexToNFA(regex* input, char &offset) {
 	if (input->isEpsRegex) {
-		return (epNFAConv<templ>(input));
+		return (epNFAConv(input, offset));
 	}
 	else if (input->isMtRegex) {
-		return (mtNFAConv<templ>(input));
+		return (mtNFAConv(input, offset));
 	}
 	else if (input->isCharRegex) {
-		return (chNFAConv<templ>(input));
+		return (chNFAConv(input, offset));
 	}
 	else if (input->isUnionRegex) {
-		//return (unNFAConv<templ, templ>(input));
+		return (unNFAConv(input, offset));
 	}
 	else if (input->isConcatRegex) {
-		//return (coNFAConv<templ, templ>(input));
+		return (coNFAConv(input, offset));
 	}
 	else if (input->isStarRegex) {
-		return (stNFAConv<templ>(input));
+		return (stNFAConv(input, offset));
 	}
 }
 
@@ -1684,7 +1691,7 @@ int main()
 	//	1
 	OneString* test17 = new OneString(Char('1'), new epsilon());
 	//	00100
-	OneString* test08 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())))));
+	OneString* test18 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())))));
 	//	100100100
 	OneString* test19 = new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())))))))));	
 
@@ -2240,9 +2247,9 @@ int main()
 	cout << "' on KSThirdEnd1" << endl;
 	cout << "result: " << KSThirdEnd1->accepts(*test17) << endl;
 	cout << "input of '";
-	test08->print();
+	test18->print();
 	cout << "' on KSThirdEnd1" << endl;
-	cout << "result: " << KSThirdEnd1->accepts(*test08) << endl;
+	cout << "result: " << KSThirdEnd1->accepts(*test18) << endl;
 	cout << "input of '";
 	test19->print();
 	cout << "' on KSThirdEnd1" << endl;
@@ -2308,10 +2315,10 @@ int main()
 	cout << "NFA: " << thirdFromEnd1->accepts(*test17) << endl;
 	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test17) << endl;
 	cout << "Testing input of: ";
-	test08->print();
+	test18->print();
 	cout << " with thirdFromEnd1 : " << endl;
-	cout << "NFA: " << thirdFromEnd1->accepts(*test08) << endl;
-	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test08) << endl;
+	cout << "NFA: " << thirdFromEnd1->accepts(*test18) << endl;
+	cout << "DFA: " << thirdEnd1DFA->accepts((String*)test18) << endl;
 	cout << "Testing input of: ";
 	test19->print();
 	cout << " with thirdFromEnd1 : " << endl;
@@ -2483,7 +2490,14 @@ int main()
 
 	// converting and testing turning a regex into an NFA
 	bool workpls = 0;
-	auto regNFA1 = RegexToNFA<char>(re8);
-	//workpls = regNFA1->accepts(*test17);
+	char start = 'a';
+	auto regNFA1 = RegexToNFA(re8, start);
+	workpls = regNFA1->accepts(*test1);
 	cout << endl << workpls << endl;
+
+	bool workpls2 = 0;
+	//auto regNFA2 = RegexToNFA<char>(re6);
+	//workpls2 = regNFA2->accepts(*test5);
+	cout << endl << workpls2 << endl;
+
 }
