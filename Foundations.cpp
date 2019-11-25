@@ -882,7 +882,7 @@ NFA<templ>* KleeneStar(NFA<templ> input) {
 		});
 }
 
-// Converts NFA -> DFA
+// Converts an NFA to a DFA
 template <class State>
 DFA<vector<State>>* NFAtoDFA(NFA<State> nfa)
 {
@@ -1157,11 +1157,13 @@ NFA<char>* chNFAConv(regex* input, char &offset) {
 	char off1 = offset;
 	offset++;
 	char off2 = offset;
+	offset++;
+	char off3 = offset;
 	charRegex* actual = (charRegex*)input;
 	vector<Char> alph{ Char(off1), Char(off2) };
 	return new NFA<char>(
 		[=](char qi) -> bool {
-			return (qi == off1 || qi == off2);
+			return (qi == off1 || qi == off2 || qi == off3);
 		},
 		alph
 			,
@@ -1171,12 +1173,14 @@ NFA<char>* chNFAConv(regex* input, char &offset) {
 			vector<char> ret{};
 			vector<char> reta{ off1 };
 			vector<char> retb{ off2 };
+			vector<char> retc{ off3 };
 			if (qi == off1) {
 				if (c.c == actual->c.c) {
 					return retb;
 				}
+				else return retc;
 			}
-			else return ret;
+			else return retc;
 		},
 			[=](char qi) {
 			vector<char> ret{};
@@ -1187,16 +1191,93 @@ NFA<char>* chNFAConv(regex* input, char &offset) {
 		});
 }
 NFA<char>* unNFAConv(regex* input, char &offset) {
-
-	/*
 	unionRegex* actual = (unionRegex*)input;
-	NFA<templ> leftNFA = RegexToNFA<templ>(actual->left);
-	NFA<templ2> rightNFA = RegexToNFA<templ2>(actual->right);
-	return UnionNFA(leftNFA, rightNFA);
-	*/
-	return false;
+	NFA<char>* leftNFA = RegexToNFA(actual->left, offset);
+	NFA<char>* rightNFA = RegexToNFA(actual->right, offset);
+	char stState = offset - 32;
+	vector<char> ret{};
+
+	return new NFA<char>(
+		[=](char qi) -> bool {
+			return (qi == stState || leftNFA->Q(qi) || rightNFA->Q(qi));
+		},
+		leftNFA->v
+			,
+			stState
+			,
+			[=](char qi, Char c) {
+			if (leftNFA->Q(qi)) {
+				return leftNFA->Delta(qi, c);
+			}
+			else if (rightNFA->Q(qi)) {
+				return rightNFA->Delta(qi, c);
+			}
+			else return ret;
+		},
+			[=](char qi) {
+			vector<char> eRet;
+			if (qi == stState) {
+				eRet.push_back(leftNFA->q0);
+				eRet.push_back(rightNFA->q0);
+				return eRet;
+			}
+			else if (leftNFA->Q(qi)) {
+				return leftNFA->EDelta(qi);
+			}
+			else if (rightNFA->Q(qi)) {
+				return rightNFA->EDelta(qi);
+			}else return ret;
+		},
+			[=](char qi) {
+			if (leftNFA->Q(qi)) {
+				return leftNFA->F(qi);
+			}
+			else if (rightNFA->Q(qi)) {
+				return rightNFA->F(qi);
+			}
+			else return false;
+		});
 }
 NFA<char>* coNFAConv(regex* input, char &offset) {
+	concatRegex* actual = (concatRegex*)input;
+	NFA<char>* leftNFA = RegexToNFA(actual->left, offset);
+	NFA<char>* rightNFA = RegexToNFA(actual->right, offset);
+
+	return new NFA<char>(
+		[=](char qi) -> bool {
+			return (leftNFA->Q(qi) || rightNFA->Q(qi));
+		},
+		leftNFA->v
+			,
+			leftNFA->q0
+			,
+			[=](char qi, Char c) {
+			vector<char> ret{};
+			if (leftNFA->Q(qi)) {
+				return leftNFA->Delta(qi, c);
+			}
+			else if (rightNFA->Q(qi)) {
+				return rightNFA->Delta(qi, c);
+			}
+			else return ret;
+		},
+			[=](char qi) {
+			vector<char> eRet{};
+			if (leftNFA->Q(qi)) {
+				eRet = leftNFA->EDelta(qi);
+				if (leftNFA->F(qi)) {
+					eRet.push_back(rightNFA->q0);
+				}
+				return eRet;
+			}
+			else if (rightNFA->Q(qi)) {
+				return rightNFA->EDelta(qi);
+			}
+			else return eRet;
+		},
+			[=](char qi) {
+			return rightNFA->F(qi);
+		});
 	/*
 	concatRegex* actual = (concatRegex*)input;
 	NFA<templ> leftNFA = RegexToNFA<templ>(actual->left);
@@ -2392,7 +2473,17 @@ int main()
 	unionRegex* re7 = new unionRegex(re5, re6);
 
 	// 0
-	charRegex* re8 = new charRegex('0');
+	charRegex* re8 = new charRegex(Char('0'));
+
+	//	(0 U 1)
+	unionRegex* re9 = new unionRegex(
+		new charRegex(Char('0')),
+		new charRegex(Char('1')));
+
+	//	01
+	concatRegex* re10 = new concatRegex(
+		new charRegex(Char('0')),
+		new charRegex(Char('1')));
 
 	// accepting: 1,3		rejecting: 2,4,5,6,7
 	OneString* reTest1 = new OneString(Char('A'), new OneString(Char('B'), new epsilon()));
@@ -2495,9 +2586,17 @@ int main()
 	workpls = regNFA1->accepts(*test1);
 	cout << endl << workpls << endl;
 
-	bool workpls2 = 0;
-	//auto regNFA2 = RegexToNFA<char>(re6);
-	//workpls2 = regNFA2->accepts(*test5);
-	cout << endl << workpls2 << endl;
+	workpls = 0;
+	start = 'a';
+	auto regNFA2 = RegexToNFA(re9, start);
+	workpls = regNFA2->accepts(*test1);
+	cout << endl << workpls << endl;
+	// test1-0  test17-1
+
+	workpls = 0;
+	start = 'a';
+	auto regNFA3 = RegexToNFA(re10, start);
+	workpls = regNFA3->accepts(*test5);
+	cout << endl << workpls << endl << endl;
 
 }
