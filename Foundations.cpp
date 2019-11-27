@@ -1278,18 +1278,42 @@ NFA<char>* coNFAConv(regex* input, char &offset) {
 			[=](char qi) {
 			return rightNFA->F(qi);
 		});
-	/*
-	concatRegex* actual = (concatRegex*)input;
-	NFA<templ> leftNFA = RegexToNFA<templ>(actual->left);
-	NFA<templ2> rightNFA = RegexToNFA<templ2>(actual->right);
-	return ConcatNFA(leftNFA, rightNFA);
-	*/
-	return false;
 }
 NFA<char>* stNFAConv(regex* input, char &offset){
 	starRegex* actual = (starRegex*)input;
-	NFA<char>* next = RegexToNFA(actual, offset);
-	return KleeneStar(*next);
+	NFA<char>* myNFA = RegexToNFA(actual->r, offset);
+	char stState = offset - 32;
+
+	return new NFA<char>(
+		[=](char qi) -> bool {
+			return(qi == stState || myNFA->Q(qi));
+		},
+		myNFA->v
+			,
+			stState
+			,
+			[=](char qi, Char c) {
+			vector<char> ret{};
+			if(qi == stState) {
+				return ret;
+			} else return (myNFA->Delta(qi, c));
+		},
+			[=](char qi) {
+			vector<char> ret{};
+			if (qi == stState) {
+				return ret;
+			}
+			else {
+				ret = myNFA->EDelta(qi);
+				if (myNFA->F(qi)) {
+					ret.push_back(myNFA->q0);
+				}
+			}
+			return ret;
+		},
+			[=](char qi) {
+			return myNFA->F(qi);
+		});
 }
 
 NFA<char>* RegexToNFA(regex* input, char &offset) {
@@ -2577,26 +2601,50 @@ int main()
 	cout << endl;
 	OneString* gen7 = re7->generate();
 	gen7->print();
-	cout << endl;
+	cout << endl << endl;
 
 	// converting and testing turning a regex into an NFA
+	cout << "Testing Regex to NFA function with NFAaccepted: " << endl;
 	bool workpls = 0;
 	char start = 'a';
+	cout << "testing regex: ";
+	re8->print();
+	cout << endl << "with input: ";
+	test1->print();
 	auto regNFA1 = RegexToNFA(re8, start);
 	workpls = regNFA1->accepts(*test1);
-	cout << endl << workpls << endl;
+	cout << endl << "accepted: " << workpls << endl << endl;
 
 	workpls = 0;
 	start = 'a';
+	cout << "testing regex: ";
+	re9->print();
+	cout << endl << "with input: ";
+	test1->print();
 	auto regNFA2 = RegexToNFA(re9, start);
 	workpls = regNFA2->accepts(*test1);
-	cout << endl << workpls << endl;
+	cout << endl << "accepted: " << workpls << endl << endl;
 	// test1-0  test17-1
 
 	workpls = 0;
 	start = 'a';
+	cout << "testing regex: ";
+	re10->print();
+	cout << endl << "with input: ";
+	test5->print();
 	auto regNFA3 = RegexToNFA(re10, start);
 	workpls = regNFA3->accepts(*test5);
-	cout << endl << workpls << endl << endl;
+	cout << endl << "accepted: " << workpls << endl << endl;
+
+	//	((0 U 1))*
+	workpls = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re5->print();
+	cout << endl << "with input: ";
+	test5->print();
+	auto regNFA4 = RegexToNFA(re5, start);
+	workpls = regNFA4->accepts(*test5);
+	cout << endl << "accepted: " << workpls << endl << endl;
 
 }
