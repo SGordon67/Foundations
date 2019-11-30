@@ -1229,13 +1229,7 @@ NFA<char>* unNFAConv(regex* input, char &offset) {
 			}else return ret;
 		},
 			[=](char qi) {
-			if (leftNFA->Q(qi)) {
-				return leftNFA->F(qi);
-			}
-			else if (rightNFA->Q(qi)) {
-				return rightNFA->F(qi);
-			}
-			else return false;
+			return (leftNFA->F(qi) || rightNFA->F(qi));
 		});
 }
 NFA<char>* coNFAConv(regex* input, char &offset) {
@@ -1282,6 +1276,7 @@ NFA<char>* coNFAConv(regex* input, char &offset) {
 NFA<char>* stNFAConv(regex* input, char &offset){
 	starRegex* actual = (starRegex*)input;
 	NFA<char>* myNFA = RegexToNFA(actual->r, offset);
+	offset++;
 	char stState = offset - 32;
 
 	return new NFA<char>(
@@ -1300,14 +1295,14 @@ NFA<char>* stNFAConv(regex* input, char &offset){
 		},
 			[=](char qi) {
 			vector<char> ret{};
+			vector<char> temp{};
 			if (qi == stState) {
-				return ret;
+				ret.push_back(myNFA->q0);
 			}
-			else {
-				ret = myNFA->EDelta(qi);
-				if (myNFA->F(qi)) {
-					ret.push_back(myNFA->q0);
-				}
+			temp = myNFA->EDelta(qi);
+			ret.insert(ret.end(), temp.begin(), temp.end());
+			if (myNFA->F(qi)) {
+				ret.push_back(myNFA->q0);
 			}
 			return ret;
 		},
@@ -1799,6 +1794,9 @@ int main()
 	OneString* test18 = new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())))));
 	//	100100100
 	OneString* test19 = new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new OneString(Char('1'), new OneString(Char('0'), new OneString(Char('0'), new epsilon())))))))));	
+	//	2
+	OneString* test20 = new OneString(Char('2'), new epsilon());
+
 
 	cout << "\n\t\ttesting evenL:\n";
 	testDFA(evenL, test1, false);	// Only one char, flase
@@ -2509,6 +2507,11 @@ int main()
 		new charRegex(Char('0')),
 		new charRegex(Char('1')));
 
+	//	0*
+	starRegex* re11 = new starRegex(
+		new charRegex(Char('0'))
+	);
+
 	// accepting: 1,3		rejecting: 2,4,5,6,7
 	OneString* reTest1 = new OneString(Char('A'), new OneString(Char('B'), new epsilon()));
 
@@ -2604,47 +2607,108 @@ int main()
 	cout << endl << endl;
 
 	// converting and testing turning a regex into an NFA
+	// 0
 	cout << "Testing Regex to NFA function with NFAaccepted: " << endl;
-	bool workpls = 0;
+	bool init = 0;
 	char start = 'a';
 	cout << "testing regex: ";
 	re8->print();
 	cout << endl << "with input: ";
 	test1->print();
-	auto regNFA1 = RegexToNFA(re8, start);
-	workpls = regNFA1->accepts(*test1);
-	cout << endl << "accepted: " << workpls << endl << endl;
+	auto regNFA1a = RegexToNFA(re8, start);
+	init = regNFA1a->accepts(*test1);
+	cout << endl << "accepted: " << init << endl << endl;
 
-	workpls = 0;
+	init = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re8->print();
+	cout << endl << "with input: ";
+	test17->print();
+	auto regNFA1b = RegexToNFA(re8, start);
+	init = regNFA1b->accepts(*test17);
+	cout << endl << "accepted: " << init << endl << endl;
+
+	// (0 U 1)
+	init = 0;
 	start = 'a';
 	cout << "testing regex: ";
 	re9->print();
 	cout << endl << "with input: ";
 	test1->print();
-	auto regNFA2 = RegexToNFA(re9, start);
-	workpls = regNFA2->accepts(*test1);
-	cout << endl << "accepted: " << workpls << endl << endl;
-	// test1-0  test17-1
+	auto regNFA2a = RegexToNFA(re9, start);
+	init = regNFA2a->accepts(*test1);
+	cout << endl << "accepted: " << init << endl << endl;
 
-	workpls = 0;
+	init = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re9->print();
+	cout << endl << "with input: ";
+	test17->print();
+	auto regNFA2b = RegexToNFA(re9, start);
+	init = regNFA2b->accepts(*test17);
+	cout << endl << "accepted: " << init << endl << endl;
+
+	init = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re9->print();
+	cout << endl << "with input: ";
+	test10->print();
+	auto regNFA2c = RegexToNFA(re9, start);
+	init = regNFA2c->accepts(*test10);
+	cout << endl << "accepted: " << init << endl << endl;
+
+	init = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re9->print();
+	cout << endl << "with input: ";
+	test20->print();
+	auto regNFA2d = RegexToNFA(re9, start);
+	init = regNFA2d->accepts(*test20);
+	cout << endl << "accepted: " << init << endl << endl;
+
+	// 01
+	init = 0;
 	start = 'a';
 	cout << "testing regex: ";
 	re10->print();
 	cout << endl << "with input: ";
 	test5->print();
-	auto regNFA3 = RegexToNFA(re10, start);
-	workpls = regNFA3->accepts(*test5);
-	cout << endl << "accepted: " << workpls << endl << endl;
+	auto regNFA3a = RegexToNFA(re10, start);
+	init = regNFA3a->accepts(*test5);
+	cout << endl << "accepted: " << init << endl << endl;
 
-	//	((0 U 1))*
-	workpls = 0;
+	//	(0)*
+	init = 0;
 	start = 'a';
 	cout << "testing regex: ";
-	re5->print();
+	re11->print();
+	cout << endl << "with input: ";
+	zeroDfaTest->print();
+	auto regNFA4a = RegexToNFA(re11, start);
+	init = regNFA4a->accepts((OneString&)*zeroDfaTest);
+	cout << endl << "accepted: " << init << endl << endl;
+
+	init = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re11->print();
+	cout << endl << "with input: ";
+	test1->print();
+	auto regNFA4b = RegexToNFA(re11, start);
+	init = regNFA4b->accepts(*test1);
+	cout << endl << "accepted: " << init << endl << endl;
+
+	init = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re11->print();
 	cout << endl << "with input: ";
 	test5->print();
-	auto regNFA4 = RegexToNFA(re5, start);
-	workpls = regNFA4->accepts(*test5);
-	cout << endl << "accepted: " << workpls << endl << endl;
-
+	auto regNFA4c = RegexToNFA(re11, start);
+	init = regNFA4c->accepts(*test5);
+	cout << endl << "accepted: " << init << endl << endl;
 }
