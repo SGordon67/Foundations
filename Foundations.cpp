@@ -907,7 +907,7 @@ DFA<vector<State>>* NFAtoDFA(NFA<State> nfa)
 			vector<State> currentStates;
 			vector<State> epsilonStates;
 
-			for (State x : a) // check whether there are epsilon transitions from current state
+			for (State x : a) // check if there are epsilon transitions from the current state
 			{
 				tempVector = nfa.EDelta(x);
 				epsilonStates.insert(epsilonStates.end(), tempVector.begin(), tempVector.end());
@@ -915,7 +915,7 @@ DFA<vector<State>>* NFAtoDFA(NFA<State> nfa)
 			currentStates.insert(currentStates.end(), epsilonStates.begin(), epsilonStates.end());
 			currentStates.insert(currentStates.end(), a.begin(), a.end());
 
-			for (State x : currentStates) // generate new sets of states from input char w/ each current state
+			for (State x : currentStates) // generate Delta states from input char with each current state
 			{
 				tempVector = nfa.Delta(x, b);
 				newStates.insert(newStates.end(), tempVector.begin(), tempVector.end());
@@ -1096,10 +1096,13 @@ OneString* generator(regex* input) {
 	return ((OneString*) input->generate());
 }
 
+
+// functions to convert each type of regex into an NFA
+
 // function header so I can reference it before it's defined
 NFA<char>* RegexToNFA(regex* input, char &offset);
 
-// functions to convert each type of regex into an NFA
+// trivial epsilon regex to NFA fucntion, never reaches accept state
 NFA<char>* epNFAConv(regex* input, char &offset) {
 	offset++;
 	char off1 = offset;
@@ -1128,6 +1131,8 @@ NFA<char>* epNFAConv(regex* input, char &offset) {
 				return (qi == off2);
 		});
 }
+
+// also trivial empty regex to NFA function, starts at accepting and transitions away
 NFA<char>* mtNFAConv(regex* input, char &offset) {
 	offset++;
 	char off1 = offset;
@@ -1136,22 +1141,24 @@ NFA<char>* mtNFAConv(regex* input, char &offset) {
 	vector<Char> alph{ Char(off1), Char(off2) };
 	return new NFA<char>(
 		[=](char qi) -> bool {
-			return (qi == off1);
+			return (qi == off1 || qi ==  off2);
 		},
 		alph,
 			off1,
 			[=](char qi, Char c) {
-			vector<char> ret{};
+			vector<char> ret{off2};
 			return ret;
 		},
 			[=](char qi) {
-			vector<char> ret{};
+			vector<char> ret{off2};
 			return ret;
 		},
 			[=](char qi) {
-			return (false);
+			return (qi == off1);
 		});
 }
+
+// char to NFA function, accepts a single specific character given
 NFA<char>* chNFAConv(regex* input, char &offset) {
 	offset++;
 	char off1 = offset;
@@ -1190,6 +1197,10 @@ NFA<char>* chNFAConv(regex* input, char &offset) {
 			return (qi == off2);
 		});
 }
+
+// unionregex to NFA function, creates extra start state that epsilon transitions to the start
+//  state of both individual NFA's (made from branches of regex tree)
+//  accepts if either indivual branch would accept
 NFA<char>* unNFAConv(regex* input, char &offset) {
 	unionRegex* actual = (unionRegex*)input;
 	NFA<char>* leftNFA = RegexToNFA(actual->left, offset);
@@ -1232,6 +1243,8 @@ NFA<char>* unNFAConv(regex* input, char &offset) {
 			return (leftNFA->F(qi) || rightNFA->F(qi));
 		});
 }
+
+// epsilon transition from the accepting state of first NFA to start state of second NFA
 NFA<char>* coNFAConv(regex* input, char &offset) {
 	concatRegex* actual = (concatRegex*)input;
 	NFA<char>* leftNFA = RegexToNFA(actual->left, offset);
@@ -1273,6 +1286,9 @@ NFA<char>* coNFAConv(regex* input, char &offset) {
 			return rightNFA->F(qi);
 		});
 }
+
+// adds a new start state that is accepting and epsilon transitions to the old start state.
+// also adds epsilon transitions from accepting states to the old start state
 NFA<char>* stNFAConv(regex* input, char &offset){
 	starRegex* actual = (starRegex*)input;
 	NFA<char>* myNFA = RegexToNFA(actual->r, offset);
@@ -1311,6 +1327,7 @@ NFA<char>* stNFAConv(regex* input, char &offset){
 		});
 }
 
+// regex to NFA function, calls functions specefic to the type of regex given
 NFA<char>* RegexToNFA(regex* input, char &offset) {
 	if (input->isEpsRegex) {
 		return (epNFAConv(input, offset));
