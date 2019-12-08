@@ -2698,6 +2698,16 @@ int main()
 	init = regNFA3a->accepts(*test5);
 	cout << endl << "accepted: " << init << endl << endl;
 
+	init = 0;
+	start = 'a';
+	cout << "testing regex: ";
+	re10->print();
+	cout << endl << "with input: ";
+	test4->print();
+	auto regNFA3b = RegexToNFA(re10, start);
+	init = regNFA3b->accepts(*test4);
+	cout << endl << "accepted: " << init << endl << endl;
+
 	//	(0)*
 	init = 0;
 	start = 'a';
