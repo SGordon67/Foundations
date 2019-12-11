@@ -1197,7 +1197,6 @@ NFA<char>* chNFAConv(regex* input, char &offset) {
 			return (qi == off2);
 		});
 }
-
 // unionregex to NFA function, creates extra start state that epsilon transitions to the start
 //  state of both individual NFA's (made from branches of regex tree)
 //  accepts if either indivual branch would accept
