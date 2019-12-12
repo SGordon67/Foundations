@@ -432,7 +432,6 @@ void testDFA(DFA<State>* inputDFA, String* inputString, bool valid) {
 
 //****************************DFA END****************************//
 
-
 //***************************NFA START**************************//
 
 // NFA Class
@@ -2455,7 +2454,6 @@ int main()
 	bool example2 = equalityDFA(thirdEnd1DFA, thirdEnd1DFA);
 	cout << "thirdEnd1DFA equal to ends0DFA: " << example1 << endl;
 	cout << "thirdEnd1DFA equal to thirdEnd1DFA: " << example2 << endl << endl;
-
 
 	// Testing Regular expressions
 	//	A((B U C))*
